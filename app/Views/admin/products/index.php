@@ -1,3 +1,13 @@
+
+<style>
+@media (max-width: 768px) {
+  .admin-products-mobile td { word-break: break-word; }
+  .admin-products-mobile td[data-label="Acciones"] { display: block; text-align: left !important; }
+  .admin-products-mobile td[data-label="Acciones"] .btn { display: block; width: 100%; margin: 0 0 0.5rem 0; }
+  .admin-products-mobile td[data-label="Acciones"] .btn:last-child { margin-bottom: 0; }
+}
+</style>
+
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
     <h1 class="h4 mb-0">Productos</h1>
     <div class="d-flex flex-column flex-sm-row gap-2">
@@ -10,7 +20,7 @@
 </div>
 
 <div class="table-responsive">
-    <table class="table table-striped align-middle table-responsive-stack">
+    <table class="table table-striped align-middle table-responsive-stack admin-products-mobile">
         <thead>
             <tr>
                 <th>ID</th>
