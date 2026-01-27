@@ -414,13 +414,19 @@ document.addEventListener('DOMContentLoaded', function () {
     manualModal.addEventListener('shown.bs.modal', calcManualTotal);
     calcManualTotal();
 
+  }
+
+  window.addEventListener('load', function () {
     try {
       var params = new URLSearchParams(window.location.search || '');
-      if (params.get('order') === 'manual' && window.bootstrap && typeof bootstrap.Modal === 'function') {
-        var modal = bootstrap.Modal.getOrCreateInstance(manualModal);
-        modal.show();
+      if (params.get('order') === 'manual') {
+        var modalEl = document.getElementById('manualOrderModal');
+        if (modalEl && window.bootstrap && typeof bootstrap.Modal === 'function') {
+          var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+          modal.show();
+        }
       }
     } catch (e) {}
-  }
+  });
 
 </script>
