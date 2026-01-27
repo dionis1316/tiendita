@@ -19,6 +19,7 @@
   - Auto-apertura del modal con `?order=manual`.
 - `app/Views/admin/customers/index.php`
   - Boton "Registrar pedido" en listado de clientes (acceso rapido).
+  - Ajustes responsive para evitar scroll horizontal en mobile.
 - `docs/tiendita-docs.md`
   - Seccion 5.5 Pedidos manuales.
 
