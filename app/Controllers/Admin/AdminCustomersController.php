@@ -293,6 +293,62 @@ class AdminCustomersController extends AdminBaseController
         header('Location: ' . BASE_URL . 'admin/customers/' . $id);
     }
 
+    public function deactivate($params): void
+    {
+        $this->requireAdmin();
+        if (!Csrf::check($_POST['csrf'] ?? null)) {
+            $_SESSION['flash_error'] = 'CSRF invalido';
+            header('Location: ' . BASE_URL . 'admin/customers');
+            return;
+        }
+
+        $id = is_array($params) ? (int)($params['id'] ?? 0) : (int)$params;
+        if ($id <= 0) {
+            $_SESSION['flash_error'] = 'Cliente invalido.';
+            header('Location: ' . BASE_URL . 'admin/customers');
+            return;
+        }
+
+        $pdo = $this->pdo();
+        $stmt = $pdo->prepare('UPDATE users SET is_active = 0 WHERE id = ? AND role = "customer"');
+        $stmt->execute([$id]);
+        if ($stmt->rowCount() > 0) {
+            $_SESSION['flash_ok'] = 'Cliente inactivado.';
+        } else {
+            $_SESSION['flash_error'] = 'No se pudo inactivar el cliente.';
+        }
+
+        header('Location: ' . BASE_URL . 'admin/customers/' . $id);
+    }
+
+    public function activate($params): void
+    {
+        $this->requireAdmin();
+        if (!Csrf::check($_POST['csrf'] ?? null)) {
+            $_SESSION['flash_error'] = 'CSRF invalido';
+            header('Location: ' . BASE_URL . 'admin/customers');
+            return;
+        }
+
+        $id = is_array($params) ? (int)($params['id'] ?? 0) : (int)$params;
+        if ($id <= 0) {
+            $_SESSION['flash_error'] = 'Cliente invalido.';
+            header('Location: ' . BASE_URL . 'admin/customers');
+            return;
+        }
+
+        $pdo = $this->pdo();
+        $stmt = $pdo->prepare('UPDATE users SET is_active = 1 WHERE id = ? AND role = "customer"');
+        $stmt->execute([$id]);
+        if ($stmt->rowCount() > 0) {
+            $_SESSION['flash_ok'] = 'Cliente activado.';
+        } else {
+            $_SESSION['flash_error'] = 'No se pudo activar el cliente.';
+        }
+
+        header('Location: ' . BASE_URL . 'admin/customers/' . $id);
+    }
+
     public function exportCsv($params): void
     {
         $this->requireAdmin();
