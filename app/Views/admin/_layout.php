@@ -7,6 +7,18 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .card { border-radius: 12px; }
+        :root {
+            --brand-blue: #c1ddf2;
+            --brand-red: #ef4e53;
+            --brand-yellow: #fce772;
+            --brand-ink: #1e1e1e;
+        }
+        .btn-brand-primary { background: var(--brand-blue); border-color: var(--brand-blue); color: var(--brand-ink); }
+        .btn-brand-primary:hover { filter: brightness(0.95); color: var(--brand-ink); }
+        .btn-brand-danger { background: var(--brand-red); border-color: var(--brand-red); color: #fff; }
+        .btn-brand-danger:hover { filter: brightness(0.95); color: #fff; }
+        .btn-brand-warn { background: var(--brand-yellow); border-color: var(--brand-yellow); color: var(--brand-ink); }
+        .btn-brand-warn:hover { filter: brightness(0.95); color: var(--brand-ink); }
         @media (max-width: 768px) {
             table.table-responsive-stack thead { display: none; }
             table.table-responsive-stack tr { display: block; margin-bottom: 0.75rem; border: 1px solid #e9ecef; border-radius: 10px; }

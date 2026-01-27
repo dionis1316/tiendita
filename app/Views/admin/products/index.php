@@ -13,9 +13,9 @@
     <div class="d-flex flex-column flex-sm-row gap-2">
         <form method="get" class="d-flex gap-2" onsubmit="return false;">
             <input type="search" id="adminProductsSearch" name="q" class="form-control" placeholder="Buscar productos" autocomplete="off" value="<?= htmlspecialchars($q ?? ($_GET['q'] ?? '')) ?>">
-            <button class="btn btn-primary" type="button">Buscar</button>
+            <button class="btn btn-brand-primary" type="button">Buscar</button>
         </form>
-        <a class="btn btn-primary" href="<?= BASE_URL ?>admin/products/create">Nuevo producto</a>
+        <a class="btn btn-brand-primary" href="<?= BASE_URL ?>admin/products/create">Nuevo producto</a>
     </div>
 </div>
 
@@ -54,16 +54,16 @@
                         <?php endif; ?>
                     </td>
                     <td data-label="Acciones" class="text-end">
-                        <a class="btn btn-sm btn-primary" href="<?= BASE_URL ?>admin/products/<?= (int)$p['id'] ?>/edit">Editar</a>
+                        <a class="btn btn-sm btn-brand-primary" href="<?= BASE_URL ?>admin/products/<?= (int)$p['id'] ?>/edit">Editar</a>
                         <?php if ((int)$p['is_active'] === 1): ?>
                             <form method="post" action="<?= BASE_URL ?>admin/products/<?= (int)$p['id'] ?>/deactivate" class="d-inline">
                                 <input type="hidden" name="csrf" value="<?= htmlspecialchars(App\Core\Csrf::token()) ?>">
-                                <button class="btn btn-sm btn-danger">Desactivar</button>
+                                <button class="btn btn-sm btn-brand-danger">Desactivar</button>
                             </form>
                         <?php else: ?>
                             <form method="post" action="<?= BASE_URL ?>admin/products/<?= (int)$p['id'] ?>/activate" class="d-inline">
                                 <input type="hidden" name="csrf" value="<?= htmlspecialchars(App\Core\Csrf::token()) ?>">
-                                <button class="btn btn-sm btn-success">Activar</button>
+                                <button class="btn btn-sm btn-brand-warn">Activar</button>
                             </form>
                         <?php endif; ?>
                     </td>

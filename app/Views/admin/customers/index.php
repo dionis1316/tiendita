@@ -12,7 +12,7 @@
     <h1 class="h4 mb-0">Clientes</h1>
     <form method="get" class="d-flex gap-2" style="max-width: 420px; width: 100%;" onsubmit="return false;">
         <input type="search" id="adminCustomersSearch" name="q" class="form-control" placeholder="Buscar clientes" autocomplete="off" value="<?= htmlspecialchars($q ?? ($_GET['q'] ?? '')) ?>">
-        <button class="btn btn-primary" type="button">Buscar</button>
+        <button class="btn btn-brand-primary" type="button">Buscar</button>
     </form>
 </div>
 
@@ -44,8 +44,8 @@
                     <td data-label="Total">$<?= number_format((float)$c['total_spent'], 2) ?></td>
                     <td data-label="Saldo">$<?= number_format((float)$c['total_debt'], 2) ?></td>
                     <td data-label="Acciones" class="text-end">
-                        <a class="btn btn-sm btn-primary me-1" href="<?= BASE_URL ?>admin/customers/<?= (int)$c['id'] ?>">Ver estado</a>
-                        <a class="btn btn-sm btn-dark" href="<?= BASE_URL ?>admin/customers/<?= (int)$c['id'] ?>?order=manual">Registrar pedido</a>
+                        <a class="btn btn-sm btn-brand-primary me-1" href="<?= BASE_URL ?>admin/customers/<?= (int)$c['id'] ?>">Ver estado</a>
+                        <a class="btn btn-sm btn-brand-danger" href="<?= BASE_URL ?>admin/customers/<?= (int)$c['id'] ?>?order=manual">Registrar pedido</a>
                     </td>
                 </tr>
             <?php endforeach; ?>
