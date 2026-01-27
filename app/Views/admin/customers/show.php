@@ -301,7 +301,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-brand-warn" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" class="btn btn-brand-primary" id="manualOrderSubmit">Confirmar pedido</button>
         </div>
       </form>
