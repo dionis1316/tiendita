@@ -2,6 +2,7 @@
 namespace App\Controllers;
 
 use App\Core\Auth;
+use App\Core\ActivityLogger;
 use App\Core\Mailer;
 
 class AuthController {
@@ -61,8 +62,10 @@ class AuthController {
         $user = $stmt->fetch();
 
         if ($user) {
+            // Create reset token and send email
             $token = bin2hex(random_bytes(32));
-            $hash = hash('sha256', $token);
+            // Validate token before updating password
+        $hash = hash('sha256', $token);
             $expires = (new \DateTime('+1 hour'))->format('Y-m-d H:i:s');
             $ins = $pdo->prepare('INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?,?,?)');
             $ins->execute([(int)$user['id'], $hash, $expires]);
@@ -113,6 +116,7 @@ class AuthController {
             exit;
         }
 
+        // Validate token before updating password
         $hash = hash('sha256', $token);
         $pdo = $this->pdo();
         $stmt = $pdo->prepare('SELECT id, user_id, expires_at, used_at FROM password_resets WHERE token_hash = ? ORDER BY id DESC LIMIT 1');
@@ -169,6 +173,8 @@ class AuthController {
             'role'      => (string)$user['role'],
             'is_active' => (int)$user['is_active'],
         ]);
+
+        ActivityLogger::log($pdo, (int)$user['id'], 'login_success');
 
         if ($user['role'] === 'admin') {
             header('Location: ' . BASE_URL . 'admin');

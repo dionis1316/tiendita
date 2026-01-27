@@ -2,6 +2,7 @@
 namespace App\Controllers;
 
 use App\Core\Auth;
+use App\Core\ActivityLogger;
 
 class CheckoutController {
 
@@ -70,6 +71,7 @@ class CheckoutController {
                 'cash' => 'CASH',
                 'credit' => 'CREDIT',
                 'yappi' => 'TRANSFER',
+                'transfer' => 'TRANSFER',
             ];
             if (!isset($methodMap[$method])) {
                 http_response_code(400);
@@ -82,9 +84,34 @@ class CheckoutController {
             $pdo = $this->pdo();
 
             $receiptPath = null;
-            if ($paymentMethod === 'TRANSFER' && isset($_FILES['receipt']) && $_FILES['receipt']['error'] === UPLOAD_ERR_OK) {
-                $ext = pathinfo($_FILES['receipt']['name'], PATHINFO_EXTENSION);
-                $receiptName = uniqid('transfer_', true) . '.' . $ext;
+            $needsReceipt = in_array($method, ['yappi', 'transfer', 'cash'], true);
+            if ($needsReceipt) {
+                if (!isset($_FILES['receipt']) || $_FILES['receipt']['error'] !== UPLOAD_ERR_OK) {
+                    http_response_code(400);
+                    exit('Debes adjuntar el comprobante o la foto del pago.');
+                }
+
+                $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                $mime = $finfo->file($_FILES['receipt']['tmp_name']);
+                $allowed = [
+                    'image/jpeg' => 'jpg',
+                    'image/png' => 'png',
+                    'image/webp' => 'webp',
+                    'image/gif' => 'gif',
+                ];
+                if (!isset($allowed[$mime])) {
+                    http_response_code(400);
+                    exit('Formato de imagen invalido.');
+                }
+
+                if (!is_uploaded_file($_FILES['receipt']['tmp_name'])) {
+                    http_response_code(400);
+                    exit('Archivo invalido.');
+                }
+
+                $ext = $allowed[$mime];
+                $prefix = $method === 'cash' ? 'cash_' : 'transfer_';
+                $receiptName = uniqid($prefix, true) . '.' . $ext;
                 $uploadDir = __DIR__ . '/../../public/uploads/receipts/';
                 if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
                 move_uploaded_file($_FILES['receipt']['tmp_name'], $uploadDir . $receiptName);
@@ -93,6 +120,7 @@ class CheckoutController {
 
             $pdo->beginTransaction();
 
+            // Lock stock rows to prevent oversell
             $ids = array_map(function($it){ return (int)$it['id']; }, $items);
             $place = implode(',', array_fill(0, count($ids), '?'));
             $lockStmt = $pdo->prepare("SELECT id, stock, is_active FROM products WHERE id IN ($place) FOR UPDATE");
@@ -139,6 +167,8 @@ class CheckoutController {
                 $pdo->prepare('INSERT INTO credit_accounts (user_id, balance) VALUES (?, ?) ON DUPLICATE KEY UPDATE balance = balance + VALUES(balance)')
                     ->execute([$userId, $total]);
             }
+
+            ActivityLogger::markCartCompleted($pdo, (int)$userId);
 
             $pdo->commit();
             unset($_SESSION['cart']);

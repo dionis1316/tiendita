@@ -1,6 +1,12 @@
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4">Productos</h1>
-    <a class="btn btn-primary" href="<?= BASE_URL ?>admin/products/create">Nuevo producto</a>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+    <h1 class="h4 mb-0">Productos</h1>
+    <div class="d-flex flex-column flex-sm-row gap-2">
+        <form method="get" class="d-flex gap-2" onsubmit="return false;">
+            <input type="search" id="adminProductsSearch" name="q" class="form-control" placeholder="Buscar productos" autocomplete="off" value="<?= htmlspecialchars($q ?? ($_GET['q'] ?? '')) ?>">
+            <button class="btn btn-outline-primary" type="button">Buscar</button>
+        </form>
+        <a class="btn btn-primary" href="<?= BASE_URL ?>admin/products/create">Nuevo producto</a>
+    </div>
 </div>
 
 <div class="table-responsive">
@@ -21,7 +27,8 @@
             <tr><td colspan="7" class="text-center text-muted">Sin productos.</td></tr>
         <?php else: ?>
             <?php foreach ($products as $p): ?>
-                <tr>
+                <?php $searchText = trim(($p['name'] ?? '') . ' ' . ($p['category_name'] ?? '')); ?>
+                <tr class="product-row" data-search="<?= htmlspecialchars(strtolower($searchText)) ?>">
                     <td data-label="ID"><?= (int)$p['id'] ?></td>
                     <td data-label="Producto">
                         <div class="fw-semibold"><?= htmlspecialchars($p['name']) ?></div>
@@ -57,3 +64,19 @@
         </tbody>
     </table>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var input = document.getElementById('adminProductsSearch');
+  if (!input) return;
+  var rows = Array.prototype.slice.call(document.querySelectorAll('.product-row'));
+  var filter = function () {
+    var q = (input.value || '').trim().toLowerCase();
+    rows.forEach(function (row) {
+      var hay = row.getAttribute('data-search') || '';
+      row.style.display = q === '' || hay.indexOf(q) !== -1 ? '' : 'none';
+    });
+  };
+  input.addEventListener('input', filter);
+});
+</script>

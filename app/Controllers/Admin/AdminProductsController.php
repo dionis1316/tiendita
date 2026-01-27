@@ -52,12 +52,24 @@ class AdminProductsController extends AdminBaseController
     {
         $this->requireAdmin();
         $pdo = $this->pdo();
-        $stmt = $pdo->query("SELECT p.*, c.name AS category_name FROM products p LEFT JOIN categories c ON c.id = p.category_id ORDER BY p.id DESC");
+        $q = trim($_GET['q'] ?? '');
+        if ($q !== '') {
+            $like = '%' . $q . '%';
+            $stmt = $pdo->prepare("SELECT p.*, c.name AS category_name
+                FROM products p
+                LEFT JOIN categories c ON c.id = p.category_id
+                WHERE p.name LIKE ? OR p.description LIKE ? OR c.name LIKE ?
+                ORDER BY p.id DESC");
+            $stmt->execute([$like, $like, $like]);
+        } else {
+            $stmt = $pdo->query("SELECT p.*, c.name AS category_name FROM products p LEFT JOIN categories c ON c.id = p.category_id ORDER BY p.id DESC");
+        }
         $products = $stmt->fetchAll();
 
         $this->view('products/index', [
             'title' => 'Productos',
             'products' => $products,
+            'q' => $q,
         ]);
     }
 

@@ -35,20 +35,34 @@ class AdminCustomersController extends AdminBaseController
     {
         $this->requireAdmin();
         $pdo = $this->pdo();
-        $stmt = $pdo->query("SELECT u.id, u.name, u.email, u.is_active,
+        $q = trim($_GET['q'] ?? '');
+        $baseSql = "SELECT u.id, u.name, u.email, u.is_active,
             COUNT(o.id) AS orders_count,
             COALESCE(SUM(o.total), 0) AS total_spent,
             COALESCE(SUM(CASE WHEN o.payment_status = 'unpaid' THEN (o.total - o.amount_paid) ELSE 0 END), 0) AS total_debt
             FROM users u
             LEFT JOIN orders o ON o.user_id = u.id
-            WHERE u.role IN ('customer','admin')
-            GROUP BY u.id
-            ORDER BY u.id DESC");
+            WHERE u.role IN ('customer','admin')";
+        $params = [];
+        if ($q !== '') {
+            $baseSql .= " AND (u.name LIKE ? OR u.email LIKE ?)";
+            $like = '%' . $q . '%';
+            $params[] = $like;
+            $params[] = $like;
+        }
+        $baseSql .= " GROUP BY u.id ORDER BY u.id DESC";
+        if ($params) {
+            $stmt = $pdo->prepare($baseSql);
+            $stmt->execute($params);
+        } else {
+            $stmt = $pdo->query($baseSql);
+        }
         $customers = $stmt->fetchAll();
 
         $this->view('customers/index', [
             'title' => 'Clientes',
             'customers' => $customers,
+            'q' => $q,
         ]);
     }
 
@@ -305,6 +319,7 @@ class AdminCustomersController extends AdminBaseController
         $ordersStmt->execute($params);
         $orders = $ordersStmt->fetchAll();
 
+        // Build and send statement email
         $lines = [];
         $lines[] = 'Cliente: ' . $customer['name'] . ' (' . $customer['email'] . ')';
         if ($start || $end) {
@@ -352,6 +367,7 @@ class AdminCustomersController extends AdminBaseController
             }
         }
 
+        // Build and send statement email
         $lines = [];
         $lines[] = 'Hola ' . $customer['name'] . ',';
         $lines[] = '';

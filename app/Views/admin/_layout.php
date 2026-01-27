@@ -37,6 +37,7 @@ if (!function_exists('asset_url')) {
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>admin/products">Productos</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>admin/customers">Clientes</a></li>
+                    <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>admin/activity">Actividad</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>">Tienda</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>admin/logout">Salir</a></li>
                 </ul>

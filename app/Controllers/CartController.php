@@ -2,6 +2,7 @@
 namespace App\Controllers;
 
 use App\Core\Auth;
+use App\Core\ActivityLogger;
 
 class CartController {
 
@@ -50,7 +51,7 @@ class CartController {
         if ($pid <= 0 || $qty <= 0) { header('Location: '.BASE_URL); return; }
 
         $pdo = $this->pdo();
-        $st = $pdo->prepare("SELECT stock FROM products WHERE id=? AND is_active=1");
+        $st = $pdo->prepare("SELECT name, stock FROM products WHERE id=? AND is_active=1");
         $st->execute([$pid]);
         $row = $st->fetch();
         if (!$row) { header('Location: '.BASE_URL); return; }
@@ -60,6 +61,17 @@ class CartController {
         $newQty = min($current + $qty, (int)$row['stock']);
         if ($newQty <= 0) { unset($cart[$pid]); }
         else { $cart[$pid] = $newQty; }
+
+        if (Auth::check()) {
+            ActivityLogger::log(
+                $pdo,
+                (int)Auth::userId(),
+                'cart_add',
+                $pid,
+                (string)$row['name'],
+                $qty
+            );
+        }
 
         header('Location: '.BASE_URL.'cart');
     }

@@ -13,6 +13,12 @@
       table.table-responsive-stack td:last-child { border-bottom: none; }
       table.table-responsive-stack td::before { content: attr(data-label); font-weight: 600; color: #6c757d; }
     }
+    .brand-logo { height: 40px; width: auto; max-width: 160px; }
+    .login-logo { display: block; margin: 0 auto; width: 70%; max-width: 220px; height: auto; }
+    @media (max-width: 576px) {
+      .brand-logo { height: 32px; max-width: 130px; }
+      .login-logo { width: 80%; max-width: 200px; }
+    }
   </style>
 </head>
 <body class="bg-light">
@@ -43,7 +49,10 @@ if (!function_exists('asset_url')) {
 
 <nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top">
   <div class="container">
-    <a class="navbar-brand fw-bold" href="<?= BASE_URL ?>">Tiendita de Evy</a>
+    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="<?= BASE_URL ?>">
+      <img src="<?= BASE_URL ?>assets/logo-evy.jpeg" alt="Evy's Store" class="brand-logo">
+      <span>Tiendita de Evy</span>
+    </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
       <span class="navbar-toggler-icon"></span>
     </button>

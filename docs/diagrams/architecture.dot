@@ -1,0 +1,26 @@
+digraph architecture {
+  rankdir=LR;
+  node [shape=box, style=rounded];
+  user [label="Usuario/Cliente"];
+  admin [label="Admin"];
+  apache [label="Apache\npublic/index.php"];
+  router [label="Router\napp/Core/Router.php"];
+  controllers [label="Controllers\napp/Controllers"];
+  admin_ctrl [label="Admin Controllers\napp/Controllers/Admin"];
+  views [label="Views\napp/Views"];
+  db [label="MySQL\n(DB)"];
+  uploads [label="Uploads\npublic/uploads"];
+  mailer [label="Mailer\nSMTP relay"];
+
+  user -> apache;
+  admin -> apache;
+  apache -> router;
+  router -> controllers;
+  router -> admin_ctrl;
+  controllers -> views;
+  admin_ctrl -> views;
+  controllers -> db;
+  admin_ctrl -> db;
+  controllers -> uploads;
+  controllers -> mailer;
+}

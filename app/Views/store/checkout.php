@@ -41,14 +41,15 @@
   <div class="mb-3">
     <label class="form-label">Metodo de pago</label>
     <select name="payment_method" class="form-select" required onchange="toggleVoucher(this.value)">
-      <option value="cash">Efectivo</option>
       <option value="credit">Credito</option>
-      <option value="yappi">Yappi</option>
+      <option value="yappi">Yappy (6910-0451)</option>
+      <option value="transfer">Transferencia</option>
+      <option value="cash">Efectivo</option>
     </select>
   </div>
 
   <div id="voucherField" style="display:none" class="mb-3">
-    <label class="form-label">Adjuntar comprobante (Yappi)</label>
+    <label id="voucherLabel" class="form-label">Adjuntar comprobante</label>
     <input type="file" name="receipt" accept="image/*" class="form-control">
   </div>
 
@@ -57,8 +58,30 @@
 
 <script>
 function toggleVoucher(value) {
-  document.getElementById('voucherField').style.display = value === 'yappi' ? 'block' : 'none';
+  var field = document.getElementById('voucherField');
+  var input = document.querySelector('input[name="receipt"]');
+  var label = document.getElementById('voucherLabel');
+  var needsReceipt = value === 'yappi' || value === 'transfer' || value === 'cash';
+
+  field.style.display = needsReceipt ? 'block' : 'none';
+  if (needsReceipt) {
+    input.setAttribute('required', 'required');
+    if (value === 'cash') {
+      label.textContent = 'Adjuntar foto (Efectivo)';
+    } else if (value === 'transfer') {
+      label.textContent = 'Adjuntar comprobante (Transferencia)';
+    } else {
+      label.textContent = 'Adjuntar comprobante (Yappy)';
+    }
+  } else {
+    input.removeAttribute('required');
+  }
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+  var select = document.querySelector('select[name="payment_method"]');
+  if (select) toggleVoucher(select.value);
+});
 </script>
 
 <?php endif; ?>

@@ -1,0 +1,13 @@
+digraph admin_statement {
+  rankdir=TB;
+  node [shape=box, style=rounded];
+  admin [label="Admin /customers/{id}"];
+  load [label="Load orders + items + transactions"];
+  email [label="Enviar estado por email"];
+  payment [label="Registrar pago"];
+  update [label="Actualizar orders/credit"];
+
+  admin -> load;
+  admin -> email;
+  admin -> payment -> update;
+}

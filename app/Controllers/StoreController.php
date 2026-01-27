@@ -11,7 +11,22 @@ class StoreController {
 
     public function home(): void {
         $pdo = $this->pdo();
-        $stmt = $pdo->query("SELECT p.id, p.name, p.price, p.image_url, c.name AS category FROM products p LEFT JOIN categories c ON c.id = p.category_id WHERE p.is_active=1 ORDER BY p.created_at DESC");
+        $q = trim($_GET['q'] ?? '');
+        if ($q !== '') {
+            $like = '%' . $q . '%';
+            $stmt = $pdo->prepare("SELECT p.id, p.name, p.price, p.image_url, c.name AS category
+                FROM products p
+                LEFT JOIN categories c ON c.id = p.category_id
+                WHERE p.is_active=1 AND (p.name LIKE ? OR p.description LIKE ? OR c.name LIKE ?)
+                ORDER BY p.created_at DESC");
+            $stmt->execute([$like, $like, $like]);
+        } else {
+            $stmt = $pdo->query("SELECT p.id, p.name, p.price, p.image_url, c.name AS category
+                FROM products p
+                LEFT JOIN categories c ON c.id = p.category_id
+                WHERE p.is_active=1
+                ORDER BY p.created_at DESC");
+        }
         $products = $stmt->fetchAll();
         $title = 'Inicio';
         include __DIR__ . '/../Views/store/home.php';

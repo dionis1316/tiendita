@@ -1,0 +1,16 @@
+digraph checkout {
+  rankdir=TB;
+  node [shape=box, style=rounded];
+  start [label="Checkout submit"];
+  csrf [label="Validar CSRF"];
+  lock [label="Lock stock\nFOR UPDATE"];
+  validate [label="Validar stock"];
+  insert_order [label="Insert orders"];
+  insert_items [label="Insert order_items"];
+  update_stock [label="Update products.stock"];
+  credit [label="Si CREDIT: credit_debts + credit_transactions"];
+  commit [label="Commit"];
+  done [label="Redirect success"];
+
+  start -> csrf -> lock -> validate -> insert_order -> insert_items -> update_stock -> credit -> commit -> done;
+}

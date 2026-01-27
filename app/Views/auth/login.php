@@ -2,6 +2,9 @@
 
 <div class="container py-4 d-flex justify-content-center">
   <div class="card p-4" style="max-width: 420px; width: 100%;">
+    <div class="text-center mb-3">
+      <img src="<?= BASE_URL ?>assets/logo-evy.jpeg" alt="Evy's Store" class="login-logo">
+    </div>
     <h1 class="h4 mb-3 text-center">Iniciar Sesion</h1>
 
     <?php if (!empty($success)): ?>

@@ -2,14 +2,14 @@
 declare(strict_types=1);
 session_start();
 
-// ✅ Mostrar errores en desarrollo
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
-error_reporting(E_ALL);
-
 // 1) Config y BASE_URL
 require __DIR__ . '/../app/Core/helpers.php';
 $config = require __DIR__ . '/../app/Config/config.php';
+// ✅ Mostrar errores solo en desarrollo
+$isDev = ($config['app']['env'] ?? 'prod') === 'dev';
+ini_set('display_errors', $isDev ? '1' : '0');
+ini_set('display_startup_errors', $isDev ? '1' : '0');
+error_reporting($isDev ? E_ALL : 0);
 if (!defined('BASE_URL')) {
     define('BASE_URL', rtrim($config['app']['base_url'] ?? '/', '/') . '/');
 }
@@ -99,6 +99,7 @@ use App\Controllers\Admin\AdminAuthController;
 use App\Controllers\Admin\AdminDashboardController;
 use App\Controllers\Admin\AdminProductsController;
 use App\Controllers\Admin\AdminCustomersController;
+use App\Controllers\Admin\AdminActivityController;
 
 $router->get('/admin/login',  [AdminAuthController::class, 'loginForm']);
 $router->post('/admin/login', [AdminAuthController::class, 'login']);
@@ -121,6 +122,7 @@ $router->post('/admin/customers/{id}/payments', [AdminCustomersController::class
 $router->post('/admin/customers/{id}/send', [AdminCustomersController::class, 'sendStatementEmail']);
 $router->get('/admin/customers/{id}/export/csv', [AdminCustomersController::class, 'exportCsv']);
 $router->get('/admin/customers/{id}/export/pdf', [AdminCustomersController::class, 'exportPdf']);
+$router->get('/admin/activity', [AdminActivityController::class, 'index']);
 
 // 6) Despacho
 $router->dispatch();
