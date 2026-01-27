@@ -44,6 +44,10 @@ class CheckoutController {
         }
 
         list($items, $total) = $this->getCartItems();
+        if (empty($_SESSION['checkout_token'])) {
+            $_SESSION['checkout_token'] = bin2hex(random_bytes(16));
+        }
+        $checkoutToken = $_SESSION['checkout_token'];
         $csrf = Auth::csrfToken();
         include __DIR__ . '/../Views/store/checkout.php';
     }
@@ -58,6 +62,12 @@ class CheckoutController {
             $csrf = $_POST['csrf'] ?? '';
             if (!isset($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrf)) {
                 exit('Token CSRF invalido.');
+            }
+
+            $orderToken = $_POST['order_token'] ?? '';
+            if (empty($orderToken) || empty($_SESSION['checkout_token']) || !hash_equals($_SESSION['checkout_token'], $orderToken)) {
+                http_response_code(400);
+                exit('Token de pedido invalido.');
             }
 
             list($items, $total) = $this->getCartItems();
@@ -82,6 +92,14 @@ class CheckoutController {
             $amountPaid = $paymentStatus === 'paid' ? $total : 0.00;
 
             $pdo = $this->pdo();
+
+            $dupStmt = $pdo->prepare("SELECT id FROM orders WHERE order_token = ? LIMIT 1");
+            $dupStmt->execute([$orderToken]);
+            if ($dupStmt->fetch()) {
+                unset($_SESSION['cart'], $_SESSION['checkout_token']);
+                header('Location: ' . BASE_URL . 'checkout/success');
+                exit;
+            }
 
             $receiptPath = null;
             $needsReceipt = in_array($method, ['yappi', 'transfer', 'cash'], true);
@@ -144,8 +162,18 @@ class CheckoutController {
                 }
             }
 
-            $stmt = $pdo->prepare("INSERT INTO orders (user_id, total, payment_method, payment_status, amount_paid, receipt_path) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$userId, $total, $paymentMethod, $paymentStatus, $amountPaid, $receiptPath]);
+            $stmt = $pdo->prepare("INSERT INTO orders (user_id, total, payment_method, payment_status, amount_paid, receipt_path, order_token) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            try {
+                $stmt->execute([$userId, $total, $paymentMethod, $paymentStatus, $amountPaid, $receiptPath, $orderToken]);
+            } catch (\PDOException $e) {
+                if ($e->getCode() === '23000') {
+                    $pdo->rollBack();
+                    unset($_SESSION['cart'], $_SESSION['checkout_token']);
+                    header('Location: ' . BASE_URL . 'checkout/success');
+                    exit;
+                }
+                throw $e;
+            }
 
             $orderId = $pdo->lastInsertId();
 
@@ -171,7 +199,7 @@ class CheckoutController {
             ActivityLogger::markCartCompleted($pdo, (int)$userId);
 
             $pdo->commit();
-            unset($_SESSION['cart']);
+            unset($_SESSION['cart'], $_SESSION['checkout_token']);
 
             header('Location: ' . BASE_URL . 'checkout/success');
             exit;

@@ -67,7 +67,7 @@
 
 <div class="card p-3 mb-4">
     <h2 class="h6">Registrar pago</h2>
-    <form method="post" action="<?= BASE_URL ?>admin/customers/<?= (int)$customer['id'] ?>/payments" class="row g-2 align-items-end">
+    <form method="post" action="<?= BASE_URL ?>admin/customers/<?= (int)$customer['id'] ?>/payments" class="row g-2 align-items-end" data-total-debt="<?= htmlspecialchars(number_format($totalDebt, 2, '.', '')) ?>">
         <input type="hidden" name="csrf" value="<?= htmlspecialchars(App\Core\Csrf::token()) ?>">
         <div class="col-md-3">
             <label class="form-label">Monto</label>
@@ -82,17 +82,26 @@
             </select>
         </div>
         <div class="col-md-3">
-            <label class="form-label">Orden (opcional)</label>
-            <select name="order_id" class="form-select">
-                <option value="">Sin orden</option>
+            <label class="form-label">Ordenes en credito (opcional)</label>
+            <select name="order_ids[]" class="form-select" multiple size="4">
                 <?php foreach ($unpaidOrders as $uo): ?>
-                    <option value="<?= (int)$uo['id'] ?>">#<?= (int)$uo['id'] ?> · $<?= number_format((float)$uo['total'] - (float)$uo['amount_paid'], 2) ?></option>
+                    <?php $remaining = (float)$uo['total'] - (float)$uo['amount_paid']; ?>
+                    <option value="<?= (int)$uo['id'] ?>" data-remaining="<?= htmlspecialchars(number_format($remaining, 2, '.', '')) ?>">
+                        #<?= (int)$uo['id'] ?> · $<?= number_format($remaining, 2) ?>
+                    </option>
                 <?php endforeach; ?>
             </select>
+            <div class="form-text">Selecciona varias si deseas pagar en un solo movimiento.</div>
         </div>
         <div class="col-md-3">
             <label class="form-label">Referencia</label>
             <input type="text" name="reference" class="form-control">
+        </div>
+        <div class="col-12">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="pay_all" value="1" id="payAllCheck">
+                <label class="form-check-label" for="payAllCheck">Pagar todo el saldo pendiente</label>
+            </div>
         </div>
         <div class="col-12">
             <button class="btn btn-success">Guardar pago</button>
@@ -216,5 +225,42 @@ document.addEventListener('click', function (e) {
   const link = document.getElementById('receiptModalLink');
   if (img) img.src = url;
   if (link) link.href = url;
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.querySelector('form[action*=\"/payments\"]');
+  if (!form) return;
+  const payAll = document.getElementById('payAllCheck');
+  const amount = form.querySelector('input[name=\"amount\"]');
+  const select = form.querySelector('select[name=\"order_ids[]\"]');
+  if (!payAll || !amount || !select) return;
+
+  function sumSelected() {
+    let total = 0;
+    Array.from(select.selectedOptions).forEach(function (opt) {
+      const val = parseFloat(opt.getAttribute('data-remaining') || '0');
+      if (!isNaN(val)) total += val;
+    });
+    return total;
+  }
+
+  function setAmount(val) {
+    amount.value = (Math.round(val * 100) / 100).toFixed(2);
+  }
+
+  payAll.addEventListener('change', function () {
+    if (payAll.checked) {
+      Array.from(select.options).forEach(function (opt) { opt.selected = true; });
+      const totalDebt = parseFloat(form.getAttribute('data-total-debt') || '0');
+      setAmount(totalDebt);
+    } else {
+      setAmount(sumSelected());
+    }
+  });
+
+  select.addEventListener('change', function () {
+    if (payAll.checked) return;
+    setAmount(sumSelected());
+  });
 });
 </script>
