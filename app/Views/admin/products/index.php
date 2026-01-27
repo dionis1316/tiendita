@@ -42,7 +42,6 @@
                     <td data-label="ID"><?= (int)$p['id'] ?></td>
                     <td data-label="Producto">
                         <div class="fw-semibold"><?= htmlspecialchars($p['name']) ?></div>
-                        <div class="text-muted small"><?= htmlspecialchars($p['image_url'] ?? '') ?></div>
                     </td>
                     <td data-label="Categoria"><?= htmlspecialchars($p['category_name'] ?? 'Sin categoria') ?></td>
                     <td data-label="Precio">$<?= number_format((float)$p['price'], 2) ?></td>
