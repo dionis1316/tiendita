@@ -1,3 +1,13 @@
+
+<style>
+@media (max-width: 768px) {
+  .admin-customers-mobile td { word-break: break-word; }
+  .admin-customers-mobile td[data-label="Acciones"] { display: block; text-align: left !important; }
+  .admin-customers-mobile td[data-label="Acciones"] .btn { display: block; width: 100%; margin: 0 0 0.5rem 0; }
+  .admin-customers-mobile td[data-label="Acciones"] .btn:last-child { margin-bottom: 0; }
+}
+</style>
+
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
     <h1 class="h4 mb-0">Clientes</h1>
     <form method="get" class="d-flex gap-2" style="max-width: 420px; width: 100%;" onsubmit="return false;">
@@ -7,7 +17,7 @@
 </div>
 
 <div class="table-responsive">
-    <table class="table table-striped align-middle table-responsive-stack">
+    <table class="table table-striped align-middle table-responsive-stack admin-customers-mobile">
         <thead>
             <tr>
                 <th>ID</th>
