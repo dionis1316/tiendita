@@ -20,6 +20,7 @@
 - `app/Views/admin/customers/index.php`
   - Boton "Registrar pedido" en listado de clientes (acceso rapido).
   - Ajustes responsive para evitar scroll horizontal en mobile.
+  - Botones usan colores de la linea grafica.
 - `docs/tiendita-docs.md`
   - Seccion 5.5 Pedidos manuales.
 
