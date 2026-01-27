@@ -34,7 +34,8 @@
                     <td data-label="Total">$<?= number_format((float)$c['total_spent'], 2) ?></td>
                     <td data-label="Saldo">$<?= number_format((float)$c['total_debt'], 2) ?></td>
                     <td data-label="Acciones" class="text-end">
-                        <a class="btn btn-sm btn-outline-primary" href="<?= BASE_URL ?>admin/customers/<?= (int)$c['id'] ?>">Ver estado</a>
+                        <a class="btn btn-sm btn-outline-primary me-1" href="<?= BASE_URL ?>admin/customers/<?= (int)$c['id'] ?>">Ver estado</a>
+                        <a class="btn btn-sm btn-success" href="<?= BASE_URL ?>admin/customers/<?= (int)$c['id'] ?>?order=manual">Registrar pedido</a>
                     </td>
                 </tr>
             <?php endforeach; ?>

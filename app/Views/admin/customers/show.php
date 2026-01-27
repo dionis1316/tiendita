@@ -79,6 +79,17 @@
     </div>
 </div>
 
+
+<div class="card p-3 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+            <h2 class="h6 mb-1">Pedido manual</h2>
+            <div class="text-muted small">Registrar un pedido para este cliente.</div>
+        </div>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#manualOrderModal">Registrar pedido</button>
+    </div>
+</div>
+
 <div class="card p-3 mb-4">
     <h2 class="h6">Registrar pago</h2>
     <form method="post" action="<?= BASE_URL ?>admin/customers/<?= (int)$customer['id'] ?>/payments" class="row g-2 align-items-end" data-total-debt="<?= htmlspecialchars(number_format($totalDebt, 2, '.', '')) ?>">
@@ -225,6 +236,74 @@
 </div>
 
 
+
+<div class="modal fade" id="manualOrderModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="post" action="<?= BASE_URL ?>admin/customers/<?= (int)$customer['id'] ?>/orders/manual">
+        <div class="modal-header">
+          <h5 class="modal-title">Pedido manual · <?= htmlspecialchars($customer['name']) ?></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="csrf" value="<?= htmlspecialchars(App\Core\Csrf::token()) ?>">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Cliente</label>
+              <div class="form-control-plaintext"><?= htmlspecialchars($customer['name']) ?> · <?= htmlspecialchars($customer['email']) ?></div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Metodo de pago</label>
+              <select name="payment_method" class="form-select">
+                <option value="CASH">Efectivo</option>
+                <option value="TRANSFER">Transferencia</option>
+                <option value="CREDIT">Credito</option>
+              </select>
+            </div>
+          </div>
+          <hr>
+          <div class="table-responsive" style="max-height: 360px;">
+            <table class="table table-sm align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Producto</th>
+                  <th>Precio</th>
+                  <th>Stock</th>
+                  <th style="width:120px;">Cantidad</th>
+                </tr>
+              </thead>
+              <tbody>
+              <?php if (empty($products)): ?>
+                <tr><td colspan="4" class="text-center text-muted">Sin productos activos.</td></tr>
+              <?php else: ?>
+                <?php foreach ($products as $p): ?>
+                  <tr>
+                    <td><?= htmlspecialchars($p['name']) ?></td>
+                    <td>$<?= number_format((float)$p['price'], 2) ?></td>
+                    <td><?= (int)$p['stock'] ?></td>
+                    <td>
+                      <input type="number" min="0" max="<?= (int)$p['stock'] ?>" step="1" name="items[<?= (int)$p['id'] ?>]" class="form-control form-control-sm manual-order-qty" data-price="<?= htmlspecialchars(number_format((float)$p['price'], 2, '.', '')) ?>" value="0">
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              <?php endif; ?>
+              </tbody>
+            </table>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="fw-semibold">Total: $<span id="manualOrderTotal">0.00</span></div>
+            <div class="text-muted small">Se registrara como pedido normal para el cliente.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success" id="manualOrderSubmit">Registrar pedido</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="receiptModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
@@ -307,4 +386,41 @@ document.addEventListener('DOMContentLoaded', function () {
 
   updateDropdownLabel();
 });
+
+
+  const manualModal = document.getElementById('manualOrderModal');
+  if (manualModal) {
+    const qtyInputs = manualModal.querySelectorAll('.manual-order-qty');
+    const totalEl = document.getElementById('manualOrderTotal');
+    const submitBtn = document.getElementById('manualOrderSubmit');
+
+    function calcManualTotal() {
+      let total = 0;
+      qtyInputs.forEach(function (input) {
+        const qty = parseInt(input.value || '0', 10);
+        const price = parseFloat(input.getAttribute('data-price') || '0');
+        if (!isNaN(qty) && !isNaN(price)) {
+          total += qty * price;
+        }
+      });
+      if (totalEl) totalEl.textContent = total.toFixed(2);
+      if (submitBtn) submitBtn.disabled = total <= 0;
+    }
+
+    qtyInputs.forEach(function (input) {
+      input.addEventListener('input', calcManualTotal);
+    });
+
+    manualModal.addEventListener('shown.bs.modal', calcManualTotal);
+    calcManualTotal();
+
+    try {
+      var params = new URLSearchParams(window.location.search || '');
+      if (params.get('order') === 'manual' && window.bootstrap && typeof bootstrap.Modal === 'function') {
+        var modal = bootstrap.Modal.getOrCreateInstance(manualModal);
+        modal.show();
+      }
+    } catch (e) {}
+  }
+
 </script>

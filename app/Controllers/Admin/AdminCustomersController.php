@@ -118,6 +118,9 @@ class AdminCustomersController extends AdminBaseController
         $unpaidStmt->execute([$id]);
         $unpaidOrders = $unpaidStmt->fetchAll();
 
+        $productsStmt = $pdo->query("SELECT id, name, price, stock, is_active FROM products WHERE is_active = 1 ORDER BY name ASC");
+        $products = $productsStmt->fetchAll();
+
         $this->view('customers/show', [
             'title' => 'Estado de cuenta',
             'customer' => $customer,
@@ -126,9 +129,147 @@ class AdminCustomersController extends AdminBaseController
             'itemsByOrder' => $itemsByOrder,
             'transactions' => $transactions,
             'unpaidOrders' => $unpaidOrders,
+            'products' => $products,
             'start' => $start,
             'end' => $end,
         ]);
+    }
+
+
+    public function createManualOrder($params): void
+    {
+        $this->requireAdmin();
+        $id = is_array($params) ? (int)($params['id'] ?? 0) : (int)$params;
+        $redirect = BASE_URL . 'admin/customers' . ($id > 0 ? '/' . $id : '');
+
+        if (!Csrf::check($_POST['csrf'] ?? null)) {
+            $_SESSION['flash_error'] = 'CSRF invalido';
+            header('Location: ' . $redirect);
+            return;
+        }
+
+        if ($id <= 0) {
+            $_SESSION['flash_error'] = 'Cliente invalido.';
+            header('Location: ' . BASE_URL . 'admin/customers');
+            return;
+        }
+
+        $method = strtoupper(trim($_POST['payment_method'] ?? 'CASH'));
+        if (!in_array($method, ['CASH', 'TRANSFER', 'CREDIT'], true)) {
+            $_SESSION['flash_error'] = 'Metodo de pago invalido.';
+            header('Location: ' . $redirect);
+            return;
+        }
+
+        $rawItems = $_POST['items'] ?? [];
+        $qtyById = [];
+        foreach ($rawItems as $pid => $qty) {
+            $pid = (int)$pid;
+            $qty = (int)$qty;
+            if ($pid > 0 && $qty > 0) {
+                $qtyById[$pid] = $qty;
+            }
+        }
+        if (empty($qtyById)) {
+            $_SESSION['flash_error'] = 'Selecciona al menos un producto.';
+            header('Location: ' . $redirect);
+            return;
+        }
+
+        $pdo = $this->pdo();
+        $custStmt = $pdo->prepare('SELECT id, name FROM users WHERE id = ? AND role IN ("customer","admin")');
+        $custStmt->execute([$id]);
+        $customer = $custStmt->fetch();
+        if (!$customer) {
+            $_SESSION['flash_error'] = 'Cliente no encontrado.';
+            header('Location: ' . BASE_URL . 'admin/customers');
+            return;
+        }
+
+        try {
+            $pdo->beginTransaction();
+
+            $ids = array_keys($qtyById);
+            $place = implode(',', array_fill(0, count($ids), '?'));
+            $lockStmt = $pdo->prepare("SELECT id, name, price, stock, is_active FROM products WHERE id IN ($place) FOR UPDATE");
+            $lockStmt->execute($ids);
+            $rows = $lockStmt->fetchAll();
+
+            $found = [];
+            $items = [];
+            $total = 0.0;
+
+            foreach ($rows as $row) {
+                $pid = (int)$row['id'];
+                $found[$pid] = true;
+                $qty = (int)($qtyById[$pid] ?? 0);
+                if ($qty <= 0) {
+                    continue;
+                }
+                if ((int)$row['is_active'] !== 1) {
+                    throw new \RuntimeException('Producto no disponible.');
+                }
+                if ((int)$row['stock'] < $qty) {
+                    throw new \RuntimeException('Stock insuficiente para ' . ($row['name'] ?? 'producto') . '.');
+                }
+                $price = (float)$row['price'];
+                $subtotal = $price * $qty;
+                $items[] = [
+                    'id' => $pid,
+                    'qty' => $qty,
+                    'price' => $price,
+                    'subtotal' => $subtotal,
+                ];
+                $total += $subtotal;
+            }
+
+            foreach ($ids as $pid) {
+                if (empty($found[$pid])) {
+                    throw new \RuntimeException('Producto no encontrado.');
+                }
+            }
+
+            if ($total <= 0 || empty($items)) {
+                throw new \RuntimeException('Selecciona al menos un producto.');
+            }
+
+            $paymentStatus = $method === 'CREDIT' ? 'unpaid' : 'paid';
+            $amountPaid = $paymentStatus === 'paid' ? $total : 0.00;
+            $orderToken = 'admin_' . bin2hex(random_bytes(12));
+
+            $stmt = $pdo->prepare("INSERT INTO orders (user_id, total, payment_method, payment_status, amount_paid, receipt_path, order_token) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$id, $total, $method, $paymentStatus, $amountPaid, null, $orderToken]);
+
+            $orderId = $pdo->lastInsertId();
+
+            $itemStmt = $pdo->prepare("INSERT INTO order_items (order_id, product_id, quantity, price, subtotal) VALUES (?, ?, ?, ?, ?)");
+            $updStock = $pdo->prepare("UPDATE products SET stock = stock - ? WHERE id = ?");
+            foreach ($items as $item) {
+                $itemStmt->execute([$orderId, $item['id'], $item['qty'], $item['price'], $item['subtotal']]);
+                $updStock->execute([$item['qty'], $item['id']]);
+            }
+
+            if ($method === 'CREDIT') {
+                $stmt = $pdo->prepare("INSERT INTO credit_debts (user_id, order_id, amount) VALUES (?, ?, ?)");
+                $stmt->execute([$id, $orderId, $total]);
+
+                $pdo->prepare('INSERT INTO credit_transactions (user_id, order_id, type, method, amount) VALUES (?,?,?,?,?)')
+                    ->execute([$id, $orderId, 'CHARGE', null, $total]);
+
+                $pdo->prepare('INSERT INTO credit_accounts (user_id, balance) VALUES (?, ?) ON DUPLICATE KEY UPDATE balance = balance + VALUES(balance)')
+                    ->execute([$id, $total]);
+            }
+
+            $pdo->commit();
+            $_SESSION['flash_ok'] = 'Pedido manual registrado para ' . ($customer['name'] ?? 'el cliente') . '.';
+        } catch (xception $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            $_SESSION['flash_error'] = 'No se pudo registrar el pedido: ' . $e->getMessage();
+        }
+
+        header('Location: ' . $redirect);
     }
 
     public function addPayment($params): void
