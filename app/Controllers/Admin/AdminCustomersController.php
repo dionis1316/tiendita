@@ -145,8 +145,11 @@ class AdminCustomersController extends AdminBaseController
         $method = $_POST['method'] ?? 'CASH';
         $reference = trim($_POST['reference'] ?? '');
         $orderId = (int)($_POST['order_id'] ?? 0);
+        $orderIds = $_POST['order_ids'] ?? [];
+        $orderIds = array_values(array_unique(array_filter(array_map('intval', (array)$orderIds), function ($v) { return $v > 0; })));
+        $payAll = ($_POST['pay_all'] ?? '') === '1';
 
-        if ($id <= 0 || $amount <= 0) {
+        if ($id <= 0) {
             $_SESSION['flash_error'] = 'Monto invalido.';
             header('Location: ' . BASE_URL . 'admin/customers/' . $id);
             return;
@@ -157,6 +160,16 @@ class AdminCustomersController extends AdminBaseController
             $_SESSION['flash_error'] = 'Metodo invalido.';
             header('Location: ' . BASE_URL . 'admin/customers/' . $id);
             return;
+        }
+
+        if (!$payAll && $amount <= 0) {
+            $_SESSION['flash_error'] = 'Monto invalido.';
+            header('Location: ' . BASE_URL . 'admin/customers/' . $id);
+            return;
+        }
+
+        if (!empty($orderIds)) {
+            $orderId = 0;
         }
 
         $pdo = $this->pdo();
@@ -183,38 +196,154 @@ class AdminCustomersController extends AdminBaseController
                 } else {
                     $applyAmount = min($amount, $remaining);
                 }
+                if ($applyAmount <= 0) {
+                    throw new \RuntimeException('No hay saldo pendiente en la orden.');
+                }
+                $amount = $applyAmount;
             }
 
-            $txnStmt = $pdo->prepare('INSERT INTO credit_transactions (user_id, order_id, type, method, amount, reference) VALUES (?,?,?,?,?,?)');
-            $txnStmt->execute([$id, $orderId > 0 ? $orderId : null, 'PAYMENT', $method, $amount, $reference ?: null]);
-            $txnId = (int)$pdo->lastInsertId();
-
-            if ($orderId > 0 && $applyAmount > 0) {
-                $payStmt = $pdo->prepare('INSERT INTO order_payments (order_id, credit_txn_id, amount) VALUES (?,?,?)');
-                $payStmt->execute([$orderId, $txnId, $applyAmount]);
-
-                $upd = $pdo->prepare('UPDATE orders SET amount_paid = amount_paid + ? WHERE id = ?');
-                $upd->execute([$applyAmount, $orderId]);
-
-                $statusStmt = $pdo->prepare('SELECT total, amount_paid FROM orders WHERE id = ?');
-                $statusStmt->execute([$orderId]);
-                $row = $statusStmt->fetch();
-                if ($row && (float)$row['amount_paid'] >= (float)$row['total']) {
-                    $pdo->prepare("UPDATE orders SET payment_status='paid', amount_paid=total WHERE id = ?")->execute([$orderId]);
-                    $pdo->prepare('UPDATE credit_debts SET paid=1 WHERE order_id = ?')->execute([$orderId]);
+            $applyTotal = 0.0;
+            if ($payAll || !empty($orderIds)) {
+                if ($payAll) {
+                    $ordersStmt = $pdo->prepare("SELECT id, total, amount_paid, created_at FROM orders WHERE user_id = ? AND payment_status = 'unpaid' ORDER BY created_at ASC");
+                    $ordersStmt->execute([$id]);
                 } else {
-                    $pdo->prepare("UPDATE orders SET payment_status='unpaid' WHERE id = ?")->execute([$orderId]);
+                    $place = implode(',', array_fill(0, count($orderIds), '?'));
+                    $ordersStmt = $pdo->prepare("SELECT id, total, amount_paid, created_at FROM orders WHERE user_id = ? AND id IN ($place) ORDER BY created_at ASC");
+                    $ordersStmt->execute(array_merge([$id], $orderIds));
                 }
+                $orders = $ordersStmt->fetchAll();
+                $totalRemaining = 0.0;
+                foreach ($orders as $o) {
+                    $totalRemaining += max((float)$o['total'] - (float)$o['amount_paid'], 0);
+                }
+                if ($totalRemaining <= 0) {
+                    throw new \RuntimeException('No hay saldo pendiente.');
+                }
+                if ($payAll || $amount <= 0) {
+                    $amount = $totalRemaining;
+                } else {
+                    $amount = min($amount, $totalRemaining);
+                }
+
+                $txnStmt = $pdo->prepare('INSERT INTO credit_transactions (user_id, order_id, type, method, amount, reference) VALUES (?,?,?,?,?,?)');
+                $txnStmt->execute([$id, null, 'PAYMENT', $method, $amount, $reference ?: null]);
+                $txnId = (int)$pdo->lastInsertId();
+
+                $payStmt = $pdo->prepare('INSERT INTO order_payments (order_id, credit_txn_id, amount) VALUES (?,?,?)');
+                $upd = $pdo->prepare('UPDATE orders SET amount_paid = amount_paid + ? WHERE id = ?');
+                foreach ($orders as $o) {
+                    $remaining = (float)$o['total'] - (float)$o['amount_paid'];
+                    if ($remaining <= 0) {
+                        continue;
+                    }
+                    if ($amount - $applyTotal <= 0) {
+                        break;
+                    }
+                    $apply = min($remaining, $amount - $applyTotal);
+                    if ($apply <= 0) {
+                        continue;
+                    }
+                    $payStmt->execute([(int)$o['id'], $txnId, $apply]);
+                    $upd->execute([$apply, (int)$o['id']]);
+                    $newPaid = (float)$o['amount_paid'] + $apply;
+                    if ($newPaid >= (float)$o['total']) {
+                        $pdo->prepare("UPDATE orders SET payment_status='paid', amount_paid=total WHERE id = ?")->execute([(int)$o['id']]);
+                        $pdo->prepare('UPDATE credit_debts SET paid=1 WHERE order_id = ?')->execute([(int)$o['id']]);
+                    } else {
+                        $pdo->prepare("UPDATE orders SET payment_status='unpaid' WHERE id = ?")->execute([(int)$o['id']]);
+                    }
+                    $applyTotal += $apply;
+                }
+            } else {
+                $txnStmt = $pdo->prepare('INSERT INTO credit_transactions (user_id, order_id, type, method, amount, reference) VALUES (?,?,?,?,?,?)');
+                $txnStmt->execute([$id, $orderId > 0 ? $orderId : null, 'PAYMENT', $method, $amount, $reference ?: null]);
+                $txnId = (int)$pdo->lastInsertId();
+
+                if ($orderId > 0 && $applyAmount > 0) {
+                    $payStmt = $pdo->prepare('INSERT INTO order_payments (order_id, credit_txn_id, amount) VALUES (?,?,?)');
+                    $payStmt->execute([$orderId, $txnId, $applyAmount]);
+
+                    $upd = $pdo->prepare('UPDATE orders SET amount_paid = amount_paid + ? WHERE id = ?');
+                    $upd->execute([$applyAmount, $orderId]);
+
+                    $statusStmt = $pdo->prepare('SELECT total, amount_paid FROM orders WHERE id = ?');
+                    $statusStmt->execute([$orderId]);
+                    $row = $statusStmt->fetch();
+                    if ($row && (float)$row['amount_paid'] >= (float)$row['total']) {
+                        $pdo->prepare("UPDATE orders SET payment_status='paid', amount_paid=total WHERE id = ?")->execute([$orderId]);
+                        $pdo->prepare('UPDATE credit_debts SET paid=1 WHERE order_id = ?')->execute([$orderId]);
+                    } else {
+                        $pdo->prepare("UPDATE orders SET payment_status='unpaid' WHERE id = ?")->execute([$orderId]);
+                    }
+                }
+                $applyTotal = $amount;
             }
 
             $pdo->prepare('INSERT INTO credit_accounts (user_id, balance) VALUES (?, 0) ON DUPLICATE KEY UPDATE balance = balance')->execute([$id]);
-            $pdo->prepare('UPDATE credit_accounts SET balance = GREATEST(balance - ?, 0) WHERE user_id = ?')->execute([$amount, $id]);
+            $pdo->prepare('UPDATE credit_accounts SET balance = GREATEST(balance - ?, 0) WHERE user_id = ?')->execute([$applyTotal, $id]);
 
             $pdo->commit();
             $_SESSION['flash_ok'] = 'Pago registrado.';
         } catch (\Throwable $e) {
             $pdo->rollBack();
             $_SESSION['flash_error'] = 'Error al registrar el pago.';
+        }
+
+        header('Location: ' . BASE_URL . 'admin/customers/' . $id);
+    }
+
+    public function deactivate($params): void
+    {
+        $this->requireAdmin();
+        if (!Csrf::check($_POST['csrf'] ?? null)) {
+            $_SESSION['flash_error'] = 'CSRF invalido';
+            header('Location: ' . BASE_URL . 'admin/customers');
+            return;
+        }
+
+        $id = is_array($params) ? (int)($params['id'] ?? 0) : (int)$params;
+        if ($id <= 0) {
+            $_SESSION['flash_error'] = 'Cliente invalido.';
+            header('Location: ' . BASE_URL . 'admin/customers');
+            return;
+        }
+
+        $pdo = $this->pdo();
+        $stmt = $pdo->prepare('UPDATE users SET is_active = 0 WHERE id = ? AND role = "customer"');
+        $stmt->execute([$id]);
+        if ($stmt->rowCount() > 0) {
+            $_SESSION['flash_ok'] = 'Cliente inactivado.';
+        } else {
+            $_SESSION['flash_error'] = 'No se pudo inactivar el cliente.';
+        }
+
+        header('Location: ' . BASE_URL . 'admin/customers/' . $id);
+    }
+
+    public function activate($params): void
+    {
+        $this->requireAdmin();
+        if (!Csrf::check($_POST['csrf'] ?? null)) {
+            $_SESSION['flash_error'] = 'CSRF invalido';
+            header('Location: ' . BASE_URL . 'admin/customers');
+            return;
+        }
+
+        $id = is_array($params) ? (int)($params['id'] ?? 0) : (int)$params;
+        if ($id <= 0) {
+            $_SESSION['flash_error'] = 'Cliente invalido.';
+            header('Location: ' . BASE_URL . 'admin/customers');
+            return;
+        }
+
+        $pdo = $this->pdo();
+        $stmt = $pdo->prepare('UPDATE users SET is_active = 1 WHERE id = ? AND role = "customer"');
+        $stmt->execute([$id]);
+        if ($stmt->rowCount() > 0) {
+            $_SESSION['flash_ok'] = 'Cliente activado.';
+        } else {
+            $_SESSION['flash_error'] = 'No se pudo activar el cliente.';
         }
 
         header('Location: ' . BASE_URL . 'admin/customers/' . $id);

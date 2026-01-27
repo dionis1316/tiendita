@@ -8,6 +8,7 @@
 <?php else: ?>
 <form method="post" action="<?= BASE_URL ?>checkout/submit" enctype="multipart/form-data" class="card p-3" style="max-width:600px">
   <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+  <input type="hidden" name="order_token" value="<?= htmlspecialchars($checkoutToken) ?>">
 
   <h5 class="mb-3">Resumen del pedido</h5>
   <div class="table-responsive">
