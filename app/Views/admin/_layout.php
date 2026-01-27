@@ -19,6 +19,20 @@
         .btn-brand-danger:hover { filter: brightness(0.95); color: #fff; }
         .btn-brand-warn { background: var(--brand-yellow); border-color: var(--brand-yellow); color: var(--brand-ink); }
         .btn-brand-warn:hover { filter: brightness(0.95); color: var(--brand-ink); }
+        .btn-primary, .btn-success { background: var(--brand-blue); border-color: var(--brand-blue); color: var(--brand-ink); }
+        .btn-primary:hover, .btn-success:hover { filter: brightness(0.95); color: var(--brand-ink); }
+        .btn-danger { background: var(--brand-red); border-color: var(--brand-red); color: #fff; }
+        .btn-danger:hover { filter: brightness(0.95); color: #fff; }
+        .btn-warning { background: var(--brand-yellow); border-color: var(--brand-yellow); color: var(--brand-ink); }
+        .btn-warning:hover { filter: brightness(0.95); color: var(--brand-ink); }
+        .btn-outline-primary { border-color: var(--brand-blue); color: var(--brand-ink); }
+        .btn-outline-primary:hover { background: var(--brand-blue); color: var(--brand-ink); }
+        .btn-outline-danger { border-color: var(--brand-red); color: var(--brand-red); }
+        .btn-outline-danger:hover { background: var(--brand-red); color: #fff; }
+        .btn-outline-success { border-color: var(--brand-blue); color: var(--brand-ink); }
+        .btn-outline-success:hover { background: var(--brand-blue); color: var(--brand-ink); }
+        .btn-outline-secondary { border-color: var(--brand-ink); color: var(--brand-ink); }
+        .btn-outline-secondary:hover { background: var(--brand-ink); color: #fff; }
         @media (max-width: 768px) {
             table.table-responsive-stack thead { display: none; }
             table.table-responsive-stack tr { display: block; margin-bottom: 0.75rem; border: 1px solid #e9ecef; border-radius: 10px; }
