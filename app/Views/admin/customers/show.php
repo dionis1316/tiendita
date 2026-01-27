@@ -299,13 +299,10 @@
             <div class="fw-semibold">Total: $<span id="manualOrderTotal">0.00</span></div>
             <div class="text-muted small">Se registrara como pedido normal para el cliente.</div>
           </div>
-          <div class="mt-3 d-md-none">
-            <button type="submit" class="btn btn-brand-primary w-100">Confirmar pedido</button>
-          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-success" id="manualOrderSubmit">Registrar pedido</button>
+          <button type="submit" class="btn btn-brand-primary" id="manualOrderSubmit">Confirmar pedido</button>
         </div>
       </form>
     </div>
