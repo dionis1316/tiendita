@@ -301,8 +301,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-brand-warn" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-brand-primary" id="manualOrderSubmit">Confirmar pedido</button>
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success" id="manualOrderSubmit">Confirmar pedido</button>
         </div>
       </form>
     </div>
@@ -321,7 +321,7 @@
       </div>
       <div class="modal-footer">
         <a id="receiptModalLink" href="#" target="_blank" class="btn btn-outline-secondary">Abrir en nueva pestaña</a>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>
