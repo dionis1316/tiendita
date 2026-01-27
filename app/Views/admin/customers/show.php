@@ -237,6 +237,11 @@
 
 
 
+
+<style>
+#manualOrderModal .modal-footer { position: sticky; bottom: 0; background: #fff; z-index: 2; }
+</style>
+
 <div class="modal fade" id="manualOrderModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
@@ -290,9 +295,12 @@
               </tbody>
             </table>
           </div>
-          <div class="d-flex justify-content-between align-items-center mt-3">
+          <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
             <div class="fw-semibold">Total: $<span id="manualOrderTotal">0.00</span></div>
             <div class="text-muted small">Se registrara como pedido normal para el cliente.</div>
+          </div>
+          <div class="mt-3 d-md-none">
+            <button type="submit" class="btn btn-brand-primary w-100">Confirmar pedido</button>
           </div>
         </div>
         <div class="modal-footer">
