@@ -74,7 +74,7 @@
         ?>
         <div class="card p-3">
             <div class="text-muted small">Saldo pendiente</div>
-            <div class="fw-semibold">$<?= number_format($totalDebt, 2) ?></div>
+            <div class="text-muted small">$<?= number_format($totalDebt, 2) ?></div>
         </div>
     </div>
 </div>
