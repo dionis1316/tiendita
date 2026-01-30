@@ -56,7 +56,7 @@
             <div class="text-muted small">Credito</div>
             <?php if (!empty($creditAccount)): ?>
                 <div class="fw-semibold">Limite: $<?= number_format((float)$creditAccount['credit_limit'], 2) ?></div>
-                <div class="text-muted small">Saldo: $<?= number_format((float)$creditAccount['balance'], 2) ?></div>
+                <div class="text-muted small">Saldo: $<?= number_format($totalDebt, 2) ?></div>
                 <div class="text-muted small">Estado: <?= htmlspecialchars($creditAccount['status']) ?></div>
             <?php else: ?>
                 <div class="text-muted">Sin cuenta de credito.</div>
@@ -67,7 +67,7 @@
         <?php
         $totalDebt = 0.0;
         foreach ($orders as $o) {
-            if (($o['payment_status'] ?? '') === 'unpaid') {
+            if (($o['payment_status'] ?? '') === 'unpaid' && ($o['payment_method'] ?? '') === 'CREDIT') {
                 $totalDebt += ((float)$o['total'] - (float)$o['amount_paid']);
             }
         }
