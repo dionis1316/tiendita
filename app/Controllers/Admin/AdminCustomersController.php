@@ -39,7 +39,7 @@ class AdminCustomersController extends AdminBaseController
         $baseSql = "SELECT u.id, u.name, u.email, u.is_active,
             COUNT(o.id) AS orders_count,
             COALESCE(SUM(o.total), 0) AS total_spent,
-            COALESCE(SUM(CASE WHEN o.payment_status = 'unpaid' THEN (o.total - o.amount_paid) ELSE 0 END), 0) AS total_debt
+            COALESCE(SUM(CASE WHEN o.payment_status = 'unpaid' AND o.payment_method = 'CREDIT' THEN (o.total - o.amount_paid) ELSE 0 END), 0) AS total_debt
             FROM users u
             LEFT JOIN orders o ON o.user_id = u.id
             WHERE u.role IN ('customer','admin')";
@@ -632,7 +632,7 @@ class AdminCustomersController extends AdminBaseController
 
         $pendingDebt = 0.0;
         foreach ($orders as $o) {
-            if (($o['payment_status'] ?? '') === 'unpaid') {
+            if (($o['payment_status'] ?? '') === 'unpaid' && ($o['payment_method'] ?? '') === 'CREDIT') {
                 $pendingDebt += ((float)$o['total'] - (float)$o['amount_paid']);
             }
         }

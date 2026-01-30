@@ -9,16 +9,16 @@ class AdminDashboardController extends AdminBaseController
         $pdo = $this->pdo();
 
         $totals = $pdo->query("SELECT
-            COALESCE(SUM(CASE WHEN payment_status = 'unpaid' THEN (total - amount_paid) ELSE 0 END), 0) AS total_debt,
+            COALESCE(SUM(CASE WHEN payment_status = 'unpaid' AND payment_method = 'CREDIT' THEN (total - amount_paid) ELSE 0 END), 0) AS total_debt,
             COALESCE(SUM(CASE WHEN payment_status = 'paid' THEN total ELSE 0 END), 0) AS total_paid,
-            COUNT(CASE WHEN payment_status = 'unpaid' THEN 1 END) AS unpaid_orders,
+            COUNT(CASE WHEN payment_status = 'unpaid' AND payment_method = 'CREDIT' THEN 1 END) AS unpaid_orders,
             COUNT(CASE WHEN payment_status = 'paid' THEN 1 END) AS paid_orders,
             COALESCE(AVG(total), 0) AS avg_ticket
             FROM orders")->fetch();
 
         $customers = $pdo->query("SELECT
             COUNT(*) AS total_customers,
-            COALESCE((SELECT COUNT(DISTINCT user_id) FROM orders WHERE payment_status = 'unpaid'), 0) AS customers_with_debt
+            COALESCE((SELECT COUNT(DISTINCT user_id) FROM orders WHERE payment_status = 'unpaid' AND payment_method = 'CREDIT'), 0) AS customers_with_debt
             FROM users u
             WHERE u.role = 'customer'")->fetch();
 
