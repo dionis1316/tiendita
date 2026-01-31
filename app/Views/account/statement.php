@@ -23,6 +23,7 @@
     <div class="card p-3">
       <div class="text-muted small">Saldo pendiente</div>
       <div class="text-muted small">$<?= number_format($pendingDebt, 2) ?></div>
+      <div class="text-muted small">Saldo a favor: $<?= number_format((float)($favorBalance ?? 0), 2) ?></div>
     </div>
   </div>
   <div class="col-md-8">

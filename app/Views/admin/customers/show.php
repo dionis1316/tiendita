@@ -58,6 +58,7 @@
                 <div class="fw-semibold">Limite: $<?= number_format((float)$creditAccount['credit_limit'], 2) ?></div>
                 <div class="text-muted small">Saldo: $<?= number_format($totalDebt, 2) ?></div>
                 <div class="text-muted small">Estado: <?= htmlspecialchars($creditAccount['status']) ?></div>
+                <div class="text-muted small">Saldo a favor: $<?= number_format((float)($creditAccount['favor_balance'] ?? 0), 2) ?></div>
             <?php else: ?>
                 <div class="text-muted">Sin cuenta de credito.</div>
             <?php endif; ?>
@@ -91,7 +92,7 @@
         <input type="hidden" name="csrf" value="<?= htmlspecialchars(App\Core\Csrf::token()) ?>">
         <div class="col-md-3">
             <label class="form-label">Monto</label>
-            <input type="number" step="0.01" min="0.01" name="amount" class="form-control" required>
+            <input type="number" step="0.01" min="0.00" name="amount" class="form-control" readonly>
         </div>
         <div class="col-md-3">
             <label class="form-label">Metodo</label>
@@ -129,13 +130,27 @@
             <label class="form-label">Referencia</label>
             <input type="text" name="reference" class="form-control">
         </div>
+        <div class="col-md-3">
+            <label class="form-label">Excedente a favor (opcional)</label>
+            <input type="number" step="0.01" min="0" name="favor_extra" class="form-control" placeholder="0.00">
+        </div>
+
         <div class="col-12">
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" name="pay_all" value="1" id="payAllCheck">
                 <label class="form-check-label" for="payAllCheck">Pagar todo el saldo pendiente</label>
             </div>
         </div>
-        <div class="col-12">
+                <div class="col-12">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div class="text-muted small">Saldo a favor disponible: $<?= number_format((float)($creditAccount['favor_balance'] ?? 0), 2) ?></div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="use_favor" value="1" id="useFavorCheck" data-favor="<?= htmlspecialchars(number_format((float)($creditAccount['favor_balance'] ?? 0), 2, '.', '')) ?>">
+                    <label class="form-check-label" for="useFavorCheck">Usar saldo a favor</label>
+                </div>
+            </div>
+        </div>
+<div class="col-12">
             <button class="btn btn-success">Guardar pago</button>
         </div>
     </form>
@@ -339,6 +354,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const amount = form.querySelector('input[name=\"amount\"]');
   const checks = form.querySelectorAll('input[name=\"order_ids[]\"]');
   const dropdownBtn = document.getElementById('orderDropdown');
+  const useFavor = document.getElementById('useFavorCheck');
   if (!payAll || !amount || !checks.length || !dropdownBtn) return;
 
   function sumSelected() {
@@ -355,6 +371,13 @@ document.addEventListener('DOMContentLoaded', function () {
     amount.value = (Math.round(val * 100) / 100).toFixed(2);
   }
 
+  function applyFavor(val) {
+    if (!useFavor || !useFavor.checked) return val;
+    const favor = parseFloat(useFavor.getAttribute('data-favor') || '0');
+    if (isNaN(favor) || favor <= 0) return val;
+    return Math.max(val - favor, 0);
+  }
+
   function updateDropdownLabel() {
     const selected = Array.from(checks).filter(function (c) { return c.checked; });
     if (selected.length === 0) {
@@ -368,10 +391,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (payAll.checked) {
       checks.forEach(function (chk) { chk.checked = true; });
       const totalDebt = parseFloat(form.getAttribute('data-total-debt') || '0');
-      setAmount(totalDebt);
+      setAmount(applyFavor(totalDebt));
       updateDropdownLabel();
     } else {
-      setAmount(sumSelected());
+      setAmount(applyFavor(sumSelected()));
       updateDropdownLabel();
     }
   });
@@ -379,12 +402,23 @@ document.addEventListener('DOMContentLoaded', function () {
   checks.forEach(function (chk) {
     chk.addEventListener('change', function () {
       if (payAll.checked) return;
-      setAmount(sumSelected());
+      setAmount(applyFavor(sumSelected()));
       updateDropdownLabel();
     });
   });
 
   updateDropdownLabel();
+
+  if (useFavor) {
+    useFavor.addEventListener('change', function () {
+      if (payAll.checked) {
+        const totalDebt = parseFloat(form.getAttribute('data-total-debt') || '0');
+        setAmount(applyFavor(totalDebt));
+      } else {
+        setAmount(applyFavor(sumSelected()));
+      }
+    });
+  }
 });
 
 
