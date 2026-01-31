@@ -79,11 +79,9 @@ class AccountController {
         }
 
         $pendingDebt = 0.0;
-        foreach ($orders as $o) {
-            if (($o['payment_status'] ?? '') === 'unpaid' && ($o['payment_method'] ?? '') === 'CREDIT') {
-                $pendingDebt += ((float)$o['total'] - (float)$o['amount_paid']);
-            }
-        }
+        $debtStmt = $pdo->prepare("SELECT COALESCE(SUM(total - amount_paid),0) FROM orders WHERE user_id = ? AND payment_status = 'unpaid' AND payment_method = 'CREDIT'");
+        $debtStmt->execute([$userId]);
+        $pendingDebt = (float)($debtStmt->fetchColumn() ?? 0);
 
         $title = 'Mi estado de cuenta';
         include __DIR__ . '/../Views/account/statement.php';

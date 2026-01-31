@@ -118,6 +118,10 @@ class AdminCustomersController extends AdminBaseController
         $unpaidStmt->execute([$id]);
         $unpaidOrders = $unpaidStmt->fetchAll();
 
+        $debtStmt = $pdo->prepare("SELECT COALESCE(SUM(total - amount_paid),0) AS debt FROM orders WHERE user_id = ? AND payment_status = 'unpaid' AND payment_method = 'CREDIT'");
+        $debtStmt->execute([$id]);
+        $totalDebtAll = (float)($debtStmt->fetchColumn() ?? 0);
+
         $productsStmt = $pdo->query("SELECT id, name, price, stock, is_active FROM products WHERE is_active = 1 ORDER BY name ASC");
         $products = $productsStmt->fetchAll();
 
@@ -129,6 +133,7 @@ class AdminCustomersController extends AdminBaseController
             'itemsByOrder' => $itemsByOrder,
             'transactions' => $transactions,
             'unpaidOrders' => $unpaidOrders,
+            'totalDebtAll' => $totalDebtAll,
             'products' => $products,
             'start' => $start,
             'end' => $end,
@@ -513,11 +518,9 @@ class AdminCustomersController extends AdminBaseController
         $orders = $ordersStmt->fetchAll();
 
         $pendingDebt = 0.0;
-        foreach ($orders as $o) {
-            if (($o['payment_status'] ?? '') === 'unpaid' && ($o['payment_method'] ?? '') === 'CREDIT') {
-                $pendingDebt += ((float)$o['total'] - (float)$o['amount_paid']);
-            }
-        }
+        $debtStmt = $pdo->prepare("SELECT COALESCE(SUM(total - amount_paid),0) FROM orders WHERE user_id = ? AND payment_status = 'unpaid' AND payment_method = 'CREDIT'");
+        $debtStmt->execute([$id]);
+        $pendingDebt = (float)($debtStmt->fetchColumn() ?? 0);
 
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="estado_cuenta_' . $id . '.csv"');
@@ -598,11 +601,9 @@ class AdminCustomersController extends AdminBaseController
         $orders = $ordersStmt->fetchAll();
 
         $pendingDebt = 0.0;
-        foreach ($orders as $o) {
-            if (($o['payment_status'] ?? '') === 'unpaid' && ($o['payment_method'] ?? '') === 'CREDIT') {
-                $pendingDebt += ((float)$o['total'] - (float)$o['amount_paid']);
-            }
-        }
+        $debtStmt = $pdo->prepare("SELECT COALESCE(SUM(total - amount_paid),0) FROM orders WHERE user_id = ? AND payment_status = 'unpaid' AND payment_method = 'CREDIT'");
+        $debtStmt->execute([$id]);
+        $pendingDebt = (float)($debtStmt->fetchColumn() ?? 0);
 
         // Build and send statement email
         $lines = [];
@@ -647,11 +648,9 @@ class AdminCustomersController extends AdminBaseController
         $orders = $ordersStmt->fetchAll();
 
         $pendingDebt = 0.0;
-        foreach ($orders as $o) {
-            if (($o['payment_status'] ?? '') === 'unpaid' && ($o['payment_method'] ?? '') === 'CREDIT') {
-                $pendingDebt += ((float)$o['total'] - (float)$o['amount_paid']);
-            }
-        }
+        $debtStmt = $pdo->prepare("SELECT COALESCE(SUM(total - amount_paid),0) FROM orders WHERE user_id = ? AND payment_status = 'unpaid' AND payment_method = 'CREDIT'");
+        $debtStmt->execute([$id]);
+        $pendingDebt = (float)($debtStmt->fetchColumn() ?? 0);
 
         // Build and send statement email
         $lines = [];

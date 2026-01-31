@@ -65,12 +65,7 @@
     </div>
     <div class="col-md-4">
         <?php
-        $totalDebt = 0.0;
-        foreach ($orders as $o) {
-            if (($o['payment_status'] ?? '') === 'unpaid' && ($o['payment_method'] ?? '') === 'CREDIT') {
-                $totalDebt += ((float)$o['total'] - (float)$o['amount_paid']);
-            }
-        }
+        $totalDebt = (float)($totalDebtAll ?? 0);
         ?>
         <div class="card p-3">
             <div class="text-muted small">Saldo pendiente</div>
