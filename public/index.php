@@ -123,6 +123,7 @@ $router->post('/admin/customers/{id}/payments', [AdminCustomersController::class
 $router->post('/admin/customers/{id}/deactivate', [AdminCustomersController::class, 'deactivate']);
 $router->post('/admin/customers/{id}/activate', [AdminCustomersController::class, 'activate']);
 $router->post('/admin/customers/{id}/send', [AdminCustomersController::class, 'sendStatementEmail']);
+$router->post('/admin/orders/{id}/confirm-receipt', [AdminCustomersController::class, 'confirmReceipt']);
 $router->get('/admin/customers/{id}/export/csv', [AdminCustomersController::class, 'exportCsv']);
 $router->get('/admin/customers/{id}/export/pdf', [AdminCustomersController::class, 'exportPdf']);
 $router->get('/admin/activity', [AdminActivityController::class, 'index']);
