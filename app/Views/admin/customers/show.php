@@ -29,6 +29,7 @@
     </div>
 </form>
 
+<?php $totalDebt = (float)($totalDebtAll ?? 0); ?>
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <div class="card p-3">
@@ -66,7 +67,6 @@
     </div>
     <div class="col-md-4">
         <?php
-        $totalDebt = (float)($totalDebtAll ?? 0);
         ?>
         <div class="card p-3">
             <div class="text-muted small">Saldo pendiente</div>
