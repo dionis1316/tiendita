@@ -612,7 +612,7 @@ public function deactivate($params): void
         list($start, $end) = $this->parseDateFilters();
         $params = [$id];
         $where = "user_id = ?" . $this->buildDateWhere('created_at', $start, $end, $params);
-        $ordersStmt = $pdo->prepare("SELECT id, total, payment_method, payment_status, amount_paid, receipt_confirmed, created_at FROM orders WHERE {$where} ORDER BY created_at DESC");
+        $ordersStmt = $pdo->prepare("SELECT id, total, payment_method, payment_status, amount_paid, receipt_confirmed, receipt_confirmed_at, created_at FROM orders WHERE {$where} ORDER BY created_at DESC");
         $ordersStmt->execute($params);
         $orders = $ordersStmt->fetchAll();
 
@@ -627,9 +627,9 @@ public function deactivate($params): void
         $out = fopen('php://output', 'w');
         fputcsv($out, ['Cliente', $customer['name'], $customer['email']]);
         fputcsv($out, ['Saldo impago', number_format($pendingDebt, 2)]);
-        fputcsv($out, ['Orden', 'Fecha', 'Total', 'Metodo', 'Pagado', 'Estado', 'Comprobante confirmado']);
+        fputcsv($out, ['Orden', 'Fecha', 'Total', 'Metodo', 'Pagado', 'Estado', 'Comprobante confirmado', 'Fecha confirmacion']);
         foreach ($orders as $o) {
-            fputcsv($out, [$o['id'], $o['created_at'], $o['total'], $o['payment_method'], $o['amount_paid'], $o['payment_status'], ((int)($o['receipt_confirmed'] ?? 0) === 1 ? 'SI' : 'NO')]);
+            fputcsv($out, [$o['id'], $o['created_at'], $o['total'], $o['payment_method'], $o['amount_paid'], $o['payment_status'], ((int)($o['receipt_confirmed'] ?? 0) === 1 ? 'SI' : 'NO'), ($o['receipt_confirmed_at'] ?? '')]);
         }
         fclose($out);
     }
@@ -695,7 +695,7 @@ public function deactivate($params): void
         list($start, $end) = $this->parseDateFilters();
         $params = [$id];
         $where = "user_id = ?" . $this->buildDateWhere('created_at', $start, $end, $params);
-        $ordersStmt = $pdo->prepare("SELECT id, total, payment_method, payment_status, amount_paid, receipt_confirmed, created_at FROM orders WHERE {$where} ORDER BY created_at DESC");
+        $ordersStmt = $pdo->prepare("SELECT id, total, payment_method, payment_status, amount_paid, receipt_confirmed, receipt_confirmed_at, created_at FROM orders WHERE {$where} ORDER BY created_at DESC");
         $ordersStmt->execute($params);
         $orders = $ordersStmt->fetchAll();
 
@@ -713,7 +713,7 @@ public function deactivate($params): void
         $lines[] = 'Saldo impago: $' . number_format($pendingDebt, 2);
         $lines[] = '---';
         foreach ($orders as $o) {
-            $lines[] = '#' . $o['id'] . ' ' . $o['created_at'] . ' Total $' . $o['total'] . ' Pagado $' . $o['amount_paid'] . ' ' . $o['payment_status'] . ' Confirmado: ' . (((int)($o['receipt_confirmed'] ?? 0) === 1) ? 'SI' : 'NO');
+            $lines[] = '#' . $o['id'] . ' ' . $o['created_at'] . ' Total $' . $o['total'] . ' Pagado $' . $o['amount_paid'] . ' ' . $o['payment_status'] . ' Confirmado: ' . (((int)($o['receipt_confirmed'] ?? 0) === 1) ? 'SI' : 'NO') . ' Fecha: ' . ($o['receipt_confirmed_at'] ?? '-');
         }
 
         $this->outputPdf($lines, 'Estado de cuenta');
@@ -742,7 +742,7 @@ public function deactivate($params): void
         list($start, $end) = $this->parseDateFilters();
         $params = [$id];
         $where = "user_id = ?" . $this->buildDateWhere('created_at', $start, $end, $params);
-        $ordersStmt = $pdo->prepare("SELECT id, total, payment_method, payment_status, amount_paid, receipt_confirmed, created_at FROM orders WHERE {$where} ORDER BY created_at DESC");
+        $ordersStmt = $pdo->prepare("SELECT id, total, payment_method, payment_status, amount_paid, receipt_confirmed, receipt_confirmed_at, created_at FROM orders WHERE {$where} ORDER BY created_at DESC");
         $ordersStmt->execute($params);
         $orders = $ordersStmt->fetchAll();
 
