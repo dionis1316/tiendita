@@ -66,7 +66,7 @@
   <div class="col-lg-6">
     <div class="card shadow-sm h-100">
       <div class="card-body">
-        <h2 class="h6 mb-3">Top clientes por consumo</h2>
+        <h2 class="h6 mb-3">Top clientes por consumo (semana actual)</h2>
         <canvas id="topRevenueChart" height="200"></canvas>
       </div>
     </div>
@@ -76,6 +76,17 @@
       <div class="card-body">
         <h2 class="h6 mb-3">Top productos mas comprados</h2>
         <canvas id="topQtyChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h6 mb-3">Ganancia mensual</h2>
+        <canvas id="profitChart" height="200"></canvas>
       </div>
     </div>
   </div>
@@ -195,6 +206,24 @@ new Chart(topQtyCtx, {
       label: 'Cantidad',
       data: topQtyValues,
       backgroundColor: '#20c997'
+    }]
+  },
+  options: { responsive: true, plugins: { legend: { display: false } } }
+});
+
+const profitMonths = <?= json_encode($chartData['profit_months'] ?? []) ?>;
+const profitTotals = <?= json_encode($chartData['profit_totals'] ?? []) ?>;
+const profitCtx = document.getElementById('profitChart');
+new Chart(profitCtx, {
+  type: 'line',
+  data: {
+    labels: profitMonths,
+    datasets: [{
+      label: 'Ganancia',
+      data: profitTotals,
+      borderColor: '#6610f2',
+      backgroundColor: 'rgba(102,16,242,0.2)',
+      tension: 0.3
     }]
   },
   options: { responsive: true, plugins: { legend: { display: false } } }

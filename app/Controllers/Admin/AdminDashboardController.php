@@ -38,7 +38,7 @@ class AdminDashboardController extends AdminBaseController
         $topCustomerRows = $pdo->query("SELECT u.name, SUM(o.total) AS total_spent, COUNT(o.id) AS orders_count, AVG(o.total) AS avg_spent
             FROM orders o
             JOIN users u ON u.id = o.user_id
-            WHERE u.role = 'customer'
+            WHERE u.role = 'customer' AND YEARWEEK(o.created_at, 1) = YEARWEEK(CURDATE(), 1)
             GROUP BY o.user_id
             ORDER BY total_spent DESC
             LIMIT 5")->fetchAll();
@@ -64,6 +64,22 @@ class AdminDashboardController extends AdminBaseController
             $topQtyValues[] = (int)$r['qty'];
         }
 
+        $profitRows = $pdo->query("SELECT DATE_FORMAT(o.created_at, '%Y-%m') AS ym,
+            COALESCE(SUM(oi.quantity * (oi.price - COALESCE(p.cost, 0))), 0) AS profit
+            FROM orders o
+            JOIN order_items oi ON oi.order_id = o.id
+            JOIN products p ON p.id = oi.product_id
+            GROUP BY ym
+            ORDER BY ym DESC
+            LIMIT 6")->fetchAll();
+        $profitRows = array_reverse($profitRows ?: []);
+        $profitMonths = [];
+        $profitTotals = [];
+        foreach ($profitRows as $r) {
+            $profitMonths[] = $r['ym'];
+            $profitTotals[] = (float)$r['profit'];
+        }
+
         $chartData = [
             'paid' => (int)($totals['paid_orders'] ?? 0),
             'unpaid' => (int)($totals['unpaid_orders'] ?? 0),
@@ -79,6 +95,8 @@ class AdminDashboardController extends AdminBaseController
             'top_customer_avgs' => $topCustomerAvgs,
             'top_qty_labels' => $topQtyLabels,
             'top_qty_values' => $topQtyValues,
+            'profit_months' => $profitMonths,
+            'profit_totals' => $profitTotals,
         ];
 
         $this->view('dashboard', [

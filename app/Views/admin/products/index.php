@@ -27,6 +27,7 @@
                 <th>Producto</th>
                 <th>Categoria</th>
                 <th>Precio</th>
+                <th>Costo</th>
                 <th>Stock</th>
                 <th>Estado</th>
                 <th class="text-end">Acciones</th>
@@ -45,6 +46,7 @@
                     </td>
                     <td data-label="Categoria"><?= htmlspecialchars($p['category_name'] ?? 'Sin categoria') ?></td>
                     <td data-label="Precio">$<?= number_format((float)$p['price'], 2) ?></td>
+                    <td data-label="Costo">$<?= number_format((float)($p['cost'] ?? 0), 2) ?></td>
                     <td data-label="Stock"><?= (int)$p['stock'] ?></td>
                     <td data-label="Estado">
                         <?php if ((int)$p['is_active'] === 1): ?>
