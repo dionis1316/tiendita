@@ -186,9 +186,17 @@
                     <td data-label="Saldo">$<?= number_format((float)$o['total'] - (float)$o['amount_paid'], 2) ?></td>
                     <td data-label="Comprobante">
                         <?php if (!empty($o['receipt_path'])): ?>
-                            <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
                                 <img src="<?= asset_url($o['receipt_path']) ?>" alt="Comprobante" style="width:48px;height:48px;object-fit:cover" class="rounded border">
                                 <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#receiptModal" data-receipt="<?= asset_url($o['receipt_path']) ?>">Ver</button>
+                                <?php if ((int)($o['receipt_confirmed'] ?? 0) === 1): ?>
+                                    <span class="badge bg-success">Confirmado</span>
+                                <?php else: ?>
+                                    <form method="post" action="<?= BASE_URL ?>admin/orders/<?= (int)$o['id'] ?>/confirm-receipt" class="d-inline">
+                                        <input type="hidden" name="csrf" value="<?= htmlspecialchars(App\Core\Csrf::token()) ?>">
+                                        <button class="btn btn-sm btn-success">Confirmar comprobante</button>
+                                    </form>
+                                <?php endif; ?>
                             </div>
                         <?php else: ?>
                             <span class="text-muted">-</span>

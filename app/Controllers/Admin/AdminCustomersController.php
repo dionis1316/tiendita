@@ -89,7 +89,7 @@ class AdminCustomersController extends AdminBaseController
 
         $orderParams = [$id];
         $orderWhere = "user_id = ?" . $this->buildDateWhere('created_at', $start, $end, $orderParams);
-        $ordersStmt = $pdo->prepare("SELECT id, total, payment_method, payment_status, amount_paid, due_date, receipt_path, created_at
+        $ordersStmt = $pdo->prepare("SELECT id, total, payment_method, payment_status, amount_paid, due_date, receipt_path, receipt_confirmed, receipt_confirmed_at, created_at
             FROM orders WHERE {$orderWhere} ORDER BY created_at DESC");
         $ordersStmt->execute($orderParams);
         $orders = $ordersStmt->fetchAll();
@@ -504,6 +504,40 @@ class AdminCustomersController extends AdminBaseController
     }
     
     
+
+    public function confirmReceipt($params): void
+    {
+        $this->requireAdmin();
+        if (!Csrf::check($_POST['csrf'] ?? null)) {
+            $_SESSION['flash_error'] = 'CSRF invalido';
+            header('Location: ' . BASE_URL . 'admin/customers');
+            return;
+        }
+
+        $orderId = is_array($params) ? (int)($params['id'] ?? 0) : (int)$params;
+        if ($orderId <= 0) {
+            $_SESSION['flash_error'] = 'Orden invalida.';
+            header('Location: ' . BASE_URL . 'admin/customers');
+            return;
+        }
+
+        $pdo = $this->pdo();
+        $stmt = $pdo->prepare('SELECT user_id FROM orders WHERE id = ?');
+        $stmt->execute([$orderId]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            $_SESSION['flash_error'] = 'Orden no encontrada.';
+            header('Location: ' . BASE_URL . 'admin/customers');
+            return;
+        }
+
+        $pdo->prepare('UPDATE orders SET receipt_confirmed = 1, receipt_confirmed_at = NOW() WHERE id = ?')
+            ->execute([$orderId]);
+
+        $_SESSION['flash_ok'] = 'Comprobante confirmado.';
+        header('Location: ' . BASE_URL . 'admin/customers/' . (int)$row['user_id']);
+    }
+
 public function deactivate($params): void
     {
         $this->requireAdmin();
