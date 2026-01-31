@@ -107,7 +107,7 @@ if (!function_exists('asset_url')) {
 
 <?php if ($pendingDebt > 0): ?>
   <div class="alert alert-warning text-center mb-0 rounded-0">
-    <strong>Saldo pendiente:</strong> $<?= number_format($pendingDebt, 2) ?>
+    <strong>Saldo impago:</strong> $<?= number_format($pendingDebt, 2) ?>
   </div>
 <?php endif; ?>
 

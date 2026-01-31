@@ -512,11 +512,19 @@ class AdminCustomersController extends AdminBaseController
         $ordersStmt->execute($params);
         $orders = $ordersStmt->fetchAll();
 
+        $pendingDebt = 0.0;
+        foreach ($orders as $o) {
+            if (($o['payment_status'] ?? '') === 'unpaid' && ($o['payment_method'] ?? '') === 'CREDIT') {
+                $pendingDebt += ((float)$o['total'] - (float)$o['amount_paid']);
+            }
+        }
+
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="estado_cuenta_' . $id . '.csv"');
 
         $out = fopen('php://output', 'w');
         fputcsv($out, ['Cliente', $customer['name'], $customer['email']]);
+        fputcsv($out, ['Saldo impago', number_format($pendingDebt, 2)]);
         fputcsv($out, ['Orden', 'Fecha', 'Total', 'Metodo', 'Pagado', 'Estado']);
         foreach ($orders as $o) {
             fputcsv($out, [$o['id'], $o['created_at'], $o['total'], $o['payment_method'], $o['amount_paid'], $o['payment_status']]);
@@ -589,12 +597,20 @@ class AdminCustomersController extends AdminBaseController
         $ordersStmt->execute($params);
         $orders = $ordersStmt->fetchAll();
 
+        $pendingDebt = 0.0;
+        foreach ($orders as $o) {
+            if (($o['payment_status'] ?? '') === 'unpaid' && ($o['payment_method'] ?? '') === 'CREDIT') {
+                $pendingDebt += ((float)$o['total'] - (float)$o['amount_paid']);
+            }
+        }
+
         // Build and send statement email
         $lines = [];
         $lines[] = 'Cliente: ' . $customer['name'] . ' (' . $customer['email'] . ')';
         if ($start || $end) {
             $lines[] = 'Rango: ' . ($start ?: '-') . ' a ' . ($end ?: '-');
         }
+        $lines[] = 'Saldo impago: $' . number_format($pendingDebt, 2);
         $lines[] = '---';
         foreach ($orders as $o) {
             $lines[] = '#' . $o['id'] . ' ' . $o['created_at'] . ' Total $' . $o['total'] . ' Pagado $' . $o['amount_paid'] . ' ' . $o['payment_status'];
