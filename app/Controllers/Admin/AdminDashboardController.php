@@ -64,6 +64,18 @@ class AdminDashboardController extends AdminBaseController
             $topQtyValues[] = (int)$r['qty'];
         }
 
+        $inventoryRows = $pdo->query("SELECT name, stock
+            FROM products
+            WHERE is_active = 1
+            ORDER BY stock DESC
+            LIMIT 10")->fetchAll();
+        $inventoryLabels = [];
+        $inventoryStocks = [];
+        foreach ($inventoryRows as $r) {
+            $inventoryLabels[] = $r['name'];
+            $inventoryStocks[] = (int)$r['stock'];
+        }
+
         $profitRows = $pdo->query("SELECT DATE_FORMAT(o.created_at, '%Y-%m') AS ym,
             COALESCE(SUM(oi.quantity * (oi.price - COALESCE(p.cost, 0))), 0) AS profit
             FROM orders o
@@ -95,6 +107,8 @@ class AdminDashboardController extends AdminBaseController
             'top_customer_avgs' => $topCustomerAvgs,
             'top_qty_labels' => $topQtyLabels,
             'top_qty_values' => $topQtyValues,
+            'inventory_labels' => $inventoryLabels,
+            'inventory_stocks' => $inventoryStocks,
             'profit_months' => $profitMonths,
             'profit_totals' => $profitTotals,
         ];

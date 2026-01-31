@@ -90,6 +90,14 @@
       </div>
     </div>
   </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h6 mb-3">Inventario de productos</h2>
+        <canvas id="inventoryChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="row g-3">
@@ -227,5 +235,43 @@ new Chart(profitCtx, {
     }]
   },
   options: { responsive: true, plugins: { legend: { display: false } } }
+});
+
+const inventoryLabels = <?= json_encode($chartData['inventory_labels'] ?? []) ?>;
+const inventoryStocks = <?= json_encode($chartData['inventory_stocks'] ?? []) ?>;
+const inventoryCtx = document.getElementById('inventoryChart');
+const inventoryLabelPlugin = {
+  id: 'inventoryLabel',
+  afterDatasetsDraw(chart) {
+    const {ctx} = chart;
+    const meta = chart.getDatasetMeta(0);
+    ctx.save();
+    ctx.font = '12px sans-serif';
+    ctx.fillStyle = '#6c757d';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    meta.data.forEach((bar, i) => {
+      const val = Number(inventoryStocks[i] || 0);
+      ctx.fillText(val.toFixed(0), bar.x, bar.y - 4);
+    });
+    ctx.restore();
+  }
+};
+new Chart(inventoryCtx, {
+  type: 'bar',
+  data: {
+    labels: inventoryLabels,
+    datasets: [{
+      label: 'Stock',
+      data: inventoryStocks,
+      backgroundColor: '#fd7e14'
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: { x: { ticks: { maxRotation: 45, minRotation: 0 } } }
+  },
+  plugins: [inventoryLabelPlugin]
 });
 </script>
