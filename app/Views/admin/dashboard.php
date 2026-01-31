@@ -66,7 +66,7 @@
   <div class="col-lg-6">
     <div class="card shadow-sm h-100">
       <div class="card-body">
-        <h2 class="h6 mb-3">Top productos por ingresos</h2>
+        <h2 class="h6 mb-3">Top clientes por consumo</h2>
         <canvas id="topRevenueChart" height="200"></canvas>
       </div>
     </div>
@@ -149,20 +149,39 @@ new Chart(monthlyCtx, {
   options: { responsive: true, plugins: { legend: { display: false } } }
 });
 
-const topRevenueLabels = <?= json_encode($chartData['top_revenue_labels'] ?? []) ?>;
-const topRevenueValues = <?= json_encode($chartData['top_revenue_values'] ?? []) ?>;
+const topCustomerLabels = <?= json_encode($chartData['top_customer_labels'] ?? []) ?>;
+const topCustomerTotals = <?= json_encode($chartData['top_customer_totals'] ?? []) ?>;
+const topCustomerAvgs = <?= json_encode($chartData['top_customer_avgs'] ?? []) ?>;
 const topRevenueCtx = document.getElementById('topRevenueChart');
+const avgLabelPlugin = {
+  id: 'avgLabel',
+  afterDatasetsDraw(chart) {
+    const {ctx} = chart;
+    const meta = chart.getDatasetMeta(0);
+    ctx.save();
+    ctx.font = '12px sans-serif';
+    ctx.fillStyle = '#6c757d';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    meta.data.forEach((bar, i) => {
+      const val = Number(topCustomerAvgs[i] || 0);
+      ctx.fillText('$' + val.toFixed(2), bar.x, bar.y - 4);
+    });
+    ctx.restore();
+  }
+};
 new Chart(topRevenueCtx, {
   type: 'bar',
   data: {
-    labels: topRevenueLabels,
+    labels: topCustomerLabels,
     datasets: [{
-      label: 'Ingresos',
-      data: topRevenueValues,
-      backgroundColor: '#6f42c1'
+      label: 'Total consumido',
+      data: topCustomerTotals,
+      backgroundColor: '#0d6efd'
     }]
   },
-  options: { responsive: true, plugins: { legend: { display: false } } }
+  options: { responsive: true, plugins: { legend: { display: false } } },
+  plugins: [avgLabelPlugin]
 });
 
 const topQtyLabels = <?= json_encode($chartData['top_qty_labels'] ?? []) ?>;
