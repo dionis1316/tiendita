@@ -29,6 +29,11 @@
                    value="<?= htmlspecialchars($product['price'] ?? '0.00') ?>">
         </div>
         <div class="col-md-4 mb-3">
+            <label class="form-label">Costo</label>
+            <input type="number" step="0.01" min="0" name="cost" class="form-control" required
+                   value="<?= htmlspecialchars($product['cost'] ?? '0.00') ?>">
+        </div>
+        <div class="col-md-4 mb-3">
             <label class="form-label">Stock</label>
             <input type="number" min="0" name="stock" class="form-control" required
                    value="<?= htmlspecialchars($product['stock'] ?? '0') ?>">

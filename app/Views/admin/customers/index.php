@@ -1,13 +1,23 @@
+
+<style>
+@media (max-width: 768px) {
+  .admin-customers-mobile td { word-break: break-word; }
+  .admin-customers-mobile td[data-label="Acciones"] { display: block; text-align: left !important; }
+  .admin-customers-mobile td[data-label="Acciones"] .btn { display: block; width: 100%; margin: 0 0 0.5rem 0; }
+  .admin-customers-mobile td[data-label="Acciones"] .btn:last-child { margin-bottom: 0; }
+}
+</style>
+
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
     <h1 class="h4 mb-0">Clientes</h1>
     <form method="get" class="d-flex gap-2" style="max-width: 420px; width: 100%;" onsubmit="return false;">
         <input type="search" id="adminCustomersSearch" name="q" class="form-control" placeholder="Buscar clientes" autocomplete="off" value="<?= htmlspecialchars($q ?? ($_GET['q'] ?? '')) ?>">
-        <button class="btn btn-outline-primary" type="button">Buscar</button>
+        <button class="btn btn-brand-primary" type="button">Buscar</button>
     </form>
 </div>
 
 <div class="table-responsive">
-    <table class="table table-striped align-middle table-responsive-stack">
+    <table class="table table-striped align-middle table-responsive-stack admin-customers-mobile">
         <thead>
             <tr>
                 <th>ID</th>
@@ -34,7 +44,8 @@
                     <td data-label="Total">$<?= number_format((float)$c['total_spent'], 2) ?></td>
                     <td data-label="Saldo">$<?= number_format((float)$c['total_debt'], 2) ?></td>
                     <td data-label="Acciones" class="text-end">
-                        <a class="btn btn-sm btn-outline-primary" href="<?= BASE_URL ?>admin/customers/<?= (int)$c['id'] ?>">Ver estado</a>
+                        <a class="btn btn-sm btn-brand-primary me-1" href="<?= BASE_URL ?>admin/customers/<?= (int)$c['id'] ?>">Ver estado</a>
+                        <a class="btn btn-sm btn-brand-danger" href="<?= BASE_URL ?>admin/customers/<?= (int)$c['id'] ?>?order=manual">Registrar pedido</a>
                     </td>
                 </tr>
             <?php endforeach; ?>

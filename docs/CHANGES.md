@@ -1,5 +1,29 @@
 # Cambios implementados
 
+## 2026-01-27 — Pedidos manuales en admin
+
+### Resumen funcional
+- Registro de pedidos manuales desde el estado de cuenta del cliente (modal con productos y cantidades).
+- Pedido manual se guarda como orden normal del cliente y descuenta inventario.
+- Acceso rapido desde la lista de clientes y auto-apertura del modal.
+
+### Cambios por archivo
+- `app/Controllers/Admin/AdminCustomersController.php`
+  - Metodo `createManualOrder` para crear pedidos manuales (validaciones, stock, credito, inventario).
+  - Se cargan productos activos para el modal.
+- `public/index.php`
+  - Ruta `POST /admin/customers/{id}/orders/manual`.
+- `app/Views/admin/customers/show.php`
+  - Boton y modal "Pedido manual".
+  - Calculo de total y validacion UI.
+  - Auto-apertura del modal con `?order=manual`.
+- `app/Views/admin/customers/index.php`
+  - Boton "Registrar pedido" en listado de clientes (acceso rapido).
+  - Ajustes responsive para evitar scroll horizontal en mobile.
+  - Botones usan colores de la linea grafica.
+- `docs/tiendita-docs.md`
+  - Seccion 5.5 Pedidos manuales.
+
 ## Resumen funcional
 - Validacion de pagos en checkout: Yappy/Transferencia/Efectivo requieren adjunto; se guarda comprobante/foto.
 - Yappy muestra numero `6910-0451`.

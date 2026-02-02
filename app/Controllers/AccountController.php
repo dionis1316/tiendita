@@ -79,11 +79,13 @@ class AccountController {
         }
 
         $pendingDebt = 0.0;
-        foreach ($orders as $o) {
-            if (($o['payment_status'] ?? '') === 'unpaid') {
-                $pendingDebt += ((float)$o['total'] - (float)$o['amount_paid']);
-            }
-        }
+        $debtStmt = $pdo->prepare("SELECT COALESCE(SUM(total - amount_paid),0) FROM orders WHERE user_id = ? AND payment_status = 'unpaid' AND payment_method = 'CREDIT'");
+        $favorStmt = $pdo->prepare("SELECT COALESCE(favor_balance,0) FROM credit_accounts WHERE user_id = ?");
+        $favorStmt->execute([$userId]);
+        $favorBalance = (float)($favorStmt->fetchColumn() ?? 0);
+
+        $debtStmt->execute([$userId]);
+        $pendingDebt = (float)($debtStmt->fetchColumn() ?? 0);
 
         $title = 'Mi estado de cuenta';
         include __DIR__ . '/../Views/account/statement.php';

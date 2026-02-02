@@ -102,6 +102,13 @@ En estado de cuenta:
 - Se actualiza `orders.amount_paid` y `payment_status`.
 - Se registra en `credit_transactions`.
 
+### 5.5 Pedidos manuales
+En el estado de cuenta del cliente:
+- Boton "Registrar pedido" abre un modal con productos y cantidades.
+- El pedido se guarda como una orden normal del cliente (con impacto en inventario).
+- Soporta metodos de pago CASH, TRANSFER o CREDIT.
+- Acceso rapido desde la lista de clientes (abre el modal automaticamente).
+
 ## 6. Recuperacion de contrasena
 Tabla: `password_resets`.
 

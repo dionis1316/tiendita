@@ -100,13 +100,14 @@ class AdminProductsController extends AdminBaseController
 
         $name = trim($_POST['name'] ?? '');
         $price = (float)($_POST['price'] ?? 0);
+        $cost = (float)($_POST['cost'] ?? 0);
         $stock = (int)($_POST['stock'] ?? 0);
         $categoryId = $_POST['category_id'] !== '' ? (int)$_POST['category_id'] : null;
         $description = trim($_POST['description'] ?? '');
         $imageUrl = trim($_POST['image_url'] ?? '');
         $isActive = isset($_POST['is_active']) ? 1 : 0;
 
-        if ($name === '' || $price < 0 || $stock < 0) {
+        if ($name === '' || $price < 0 || $cost < 0 || $stock < 0) {
             $_SESSION['flash_error'] = 'Datos invalidos.';
             header('Location: ' . BASE_URL . 'admin/products/create');
             return;
@@ -120,8 +121,8 @@ class AdminProductsController extends AdminBaseController
         }
 
         $pdo = $this->pdo();
-        $stmt = $pdo->prepare('INSERT INTO products (category_id, name, description, price, stock, image_url, is_active) VALUES (?,?,?,?,?,?,?)');
-        $stmt->execute([$categoryId, $name, $description, $price, $stock, $imageUrl ?: null, $isActive]);
+        $stmt = $pdo->prepare('INSERT INTO products (category_id, name, description, price, cost, stock, image_url, is_active) VALUES (?,?,?,?,?,?,?,?)');
+        $stmt->execute([$categoryId, $name, $description, $price, $cost, $stock, $imageUrl ?: null, $isActive]);
 
         $_SESSION['flash_ok'] = 'Producto creado.';
         header('Location: ' . BASE_URL . 'admin/products');
@@ -165,13 +166,14 @@ class AdminProductsController extends AdminBaseController
         $id = is_array($params) ? (int)($params['id'] ?? 0) : (int)$params;
         $name = trim($_POST['name'] ?? '');
         $price = (float)($_POST['price'] ?? 0);
+        $cost = (float)($_POST['cost'] ?? 0);
         $stock = (int)($_POST['stock'] ?? 0);
         $categoryId = $_POST['category_id'] !== '' ? (int)$_POST['category_id'] : null;
         $description = trim($_POST['description'] ?? '');
         $imageUrl = trim($_POST['image_url'] ?? '');
         $isActive = isset($_POST['is_active']) ? 1 : 0;
 
-        if ($id <= 0 || $name === '' || $price < 0 || $stock < 0) {
+        if ($id <= 0 || $name === '' || $price < 0 || $cost < 0 || $stock < 0) {
             $_SESSION['flash_error'] = 'Datos invalidos.';
             header('Location: ' . BASE_URL . 'admin/products');
             return;
@@ -185,8 +187,8 @@ class AdminProductsController extends AdminBaseController
         }
 
         $pdo = $this->pdo();
-        $stmt = $pdo->prepare('UPDATE products SET category_id=?, name=?, description=?, price=?, stock=?, image_url=?, is_active=? WHERE id=?');
-        $stmt->execute([$categoryId, $name, $description, $price, $stock, $imageUrl ?: null, $isActive, $id]);
+        $stmt = $pdo->prepare('UPDATE products SET category_id=?, name=?, description=?, price=?, cost=?, stock=?, image_url=?, is_active=? WHERE id=?');
+        $stmt->execute([$categoryId, $name, $description, $price, $cost, $stock, $imageUrl ?: null, $isActive, $id]);
 
         $_SESSION['flash_ok'] = 'Producto actualizado.';
         header('Location: ' . BASE_URL . 'admin/products');

@@ -15,6 +15,29 @@
     }
     .brand-logo { height: 40px; width: auto; max-width: 160px; }
     .login-logo { display: block; margin: 0 auto; width: 70%; max-width: 220px; height: auto; }
+    :root {
+      --brand-blue: #c1ddf2;
+      --brand-red: #ef4e53;
+      --brand-yellow: #fce772;
+      --brand-green: #2f9e44;
+      --brand-ink: #1e1e1e;
+    }
+    .btn-primary { background: var(--brand-blue); border-color: var(--brand-blue); color: var(--brand-ink); }
+    .btn-primary:hover { filter: brightness(0.95); color: var(--brand-ink); }
+    .btn-success { background: var(--brand-green); border-color: var(--brand-green); color: #fff; }
+    .btn-success:hover { filter: brightness(0.95); color: #fff; }
+    .btn-danger { background: var(--brand-red); border-color: var(--brand-red); color: #fff; }
+    .btn-danger:hover { filter: brightness(0.95); color: #fff; }
+    .btn-warning { background: var(--brand-yellow); border-color: var(--brand-yellow); color: var(--brand-ink); }
+    .btn-warning:hover { filter: brightness(0.95); color: var(--brand-ink); }
+    .btn-outline-primary { border-color: var(--brand-blue); color: var(--brand-ink); }
+    .btn-outline-primary:hover { background: var(--brand-blue); color: var(--brand-ink); }
+    .btn-outline-danger { border-color: var(--brand-red); color: var(--brand-red); }
+    .btn-outline-danger:hover { background: var(--brand-red); color: #fff; }
+    .btn-outline-success { border-color: var(--brand-green); color: var(--brand-green); }
+    .btn-outline-success:hover { background: var(--brand-green); color: #fff; }
+    .btn-outline-secondary { border-color: var(--brand-ink); color: var(--brand-ink); }
+    .btn-outline-secondary:hover { background: var(--brand-ink); color: #fff; }
     @media (max-width: 576px) {
       .brand-logo { height: 32px; max-width: 130px; }
       .login-logo { width: 80%; max-width: 200px; }
@@ -84,7 +107,7 @@ if (!function_exists('asset_url')) {
 
 <?php if ($pendingDebt > 0): ?>
   <div class="alert alert-warning text-center mb-0 rounded-0">
-    <strong>Saldo pendiente:</strong> $<?= number_format($pendingDebt, 2) ?>
+    <strong>Saldo impago:</strong> $<?= number_format($pendingDebt, 2) ?>
   </div>
 <?php endif; ?>
 
