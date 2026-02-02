@@ -92,7 +92,7 @@
         <input type="hidden" name="csrf" value="<?= htmlspecialchars(App\Core\Csrf::token()) ?>">
         <div class="col-md-3">
             <label class="form-label">Monto</label>
-            <input type="number" step="0.01" min="0.00" name="amount" class="form-control" readonly>
+            <input type="number" step="0.01" min="0.00" name="amount" class="form-control">
         </div>
         <div class="col-md-3">
             <label class="form-label">Metodo</label>
@@ -133,6 +133,7 @@
         <div class="col-md-3">
             <label class="form-label">Excedente a favor (opcional)</label>
             <input type="number" step="0.01" min="0" name="favor_extra" class="form-control" placeholder="0.00">
+            <div class="form-text">Este monto se agrega al saldo a favor del cliente.</div>
         </div>
 
         <div class="col-12">
@@ -427,6 +428,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
+
 });
 
 

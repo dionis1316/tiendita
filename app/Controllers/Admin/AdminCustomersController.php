@@ -296,7 +296,7 @@ class AdminCustomersController extends AdminBaseController
     $orderIds = array_values(array_unique(array_filter(array_map('intval', (array)$orderIds), function ($v) { return $v > 0; })));
     $payAll = ($_POST['pay_all'] ?? '') === '1';
     $useFavor = ($_POST['use_favor'] ?? '') === '1';
-        $favorExtra = (float)($_POST['favor_extra'] ?? 0);
+    $favorExtra = (float)($_POST['favor_extra'] ?? 0);
     
     if ($id <= 0) {
     $_SESSION['flash_error'] = 'Monto invalido.';
@@ -311,7 +311,7 @@ class AdminCustomersController extends AdminBaseController
     return;
     }
     
-    if (!$payAll && $amount <= 0 && !$useFavor) {
+    if (!$payAll && $amount <= 0 && !$useFavor && $favorExtra <= 0) {
     $_SESSION['flash_error'] = 'Monto invalido.';
     header('Location: ' . BASE_URL . 'admin/customers/' . $id);
     return;
@@ -320,6 +320,7 @@ class AdminCustomersController extends AdminBaseController
     if (!empty($orderIds)) {
     $orderId = 0;
     }
+    $autoApplyAll = (!$payAll && empty($orderIds) && $orderId <= 0 && $amount > 0);
     
     $pdo = $this->pdo();
     $pdo->beginTransaction();
@@ -338,9 +339,18 @@ class AdminCustomersController extends AdminBaseController
     
     $applyTotal = 0.0;
     $favorApply = 0.0;
+    $onlyFavor = (!$payAll && empty($orderIds) && $orderId <= 0 && $favorExtra > 0);
     
-    if ($payAll || !empty($orderIds)) {
+    if ($onlyFavor) {
+    $pdo->prepare('INSERT INTO credit_accounts (user_id, balance, favor_balance) VALUES (?, 0, 0) ON DUPLICATE KEY UPDATE balance = balance')->execute([$id]);
+    $pdo->prepare('UPDATE credit_accounts SET favor_balance = favor_balance + ? WHERE user_id = ?')->execute([$favorExtra, $id]);
+    $pdo->prepare('INSERT INTO credit_transactions (user_id, order_id, type, method, amount, reference) VALUES (?,?,?,?,?,?)')
+        ->execute([$id, null, 'ADJUSTMENT', 'ADJUSTMENT', $favorExtra, $reference ?: 'Saldo a favor']);
+    } elseif ($payAll || $autoApplyAll || !empty($orderIds)) {
     if ($payAll) {
+    $ordersStmt = $pdo->prepare("SELECT id, total, amount_paid, created_at FROM orders WHERE user_id = ? AND payment_status = 'unpaid' ORDER BY created_at ASC");
+    $ordersStmt->execute([$id]);
+    } elseif ($autoApplyAll) {
     $ordersStmt = $pdo->prepare("SELECT id, total, amount_paid, created_at FROM orders WHERE user_id = ? AND payment_status = 'unpaid' ORDER BY created_at ASC");
     $ordersStmt->execute([$id]);
     } else {
@@ -354,6 +364,19 @@ class AdminCustomersController extends AdminBaseController
     $totalRemaining += max((float)$o['total'] - (float)$o['amount_paid'], 0);
     }
     if ($totalRemaining <= 0) {
+    if ($amount > 0) {
+    $favorExtra += $amount;
+    }
+    if ($favorExtra > 0) {
+    $pdo->prepare('INSERT INTO credit_accounts (user_id, balance, favor_balance) VALUES (?, 0, 0) ON DUPLICATE KEY UPDATE balance = balance')->execute([$id]);
+    $pdo->prepare('UPDATE credit_accounts SET favor_balance = favor_balance + ? WHERE user_id = ?')->execute([$favorExtra, $id]);
+    $pdo->prepare('INSERT INTO credit_transactions (user_id, order_id, type, method, amount, reference) VALUES (?,?,?,?,?,?)')
+        ->execute([$id, null, 'ADJUSTMENT', 'ADJUSTMENT', $favorExtra, $reference ?: 'Saldo a favor']);
+    $pdo->commit();
+    $_SESSION['flash_ok'] = 'Pago registrado.';
+    header('Location: ' . BASE_URL . 'admin/customers/' . $id);
+    return;
+    }
     throw new \RuntimeException('No hay saldo pendiente.');
     }
     
@@ -362,10 +385,15 @@ class AdminCustomersController extends AdminBaseController
     $totalRemaining -= $favorApply;
     }
     
-    if ($payAll || $amount <= 0) {
+    if ($payAll) {
+    $amount = $totalRemaining;
+    } else {
+    if ($amount > $totalRemaining) {
+    $favorExtra += ($amount - $totalRemaining);
     $amount = $totalRemaining;
     } else {
     $amount = min($amount, $totalRemaining);
+    }
     }
     if ($amount < 0) $amount = 0;
     
@@ -451,7 +479,12 @@ class AdminCustomersController extends AdminBaseController
     $remaining -= $favorApply;
     }
     
+    if ($amount > $remaining) {
+    $favorExtra += ($amount - $remaining);
+    $amount = $remaining;
+    } else {
     $amount = min($amount, $remaining);
+    }
     if ($amount < 0) $amount = 0;
     
     if ($favorApply > 0) {
@@ -491,6 +524,11 @@ class AdminCustomersController extends AdminBaseController
     $pdo->prepare('UPDATE credit_accounts SET balance = GREATEST(balance - ?, 0) WHERE user_id = ?')->execute([$applyTotal, $id]);
     if ($favorApply > 0) {
     $pdo->prepare('UPDATE credit_accounts SET favor_balance = GREATEST(favor_balance - ?, 0) WHERE user_id = ?')->execute([$favorApply, $id]);
+    }
+    if ($favorExtra > 0) {
+    $pdo->prepare('UPDATE credit_accounts SET favor_balance = favor_balance + ? WHERE user_id = ?')->execute([$favorExtra, $id]);
+    $pdo->prepare('INSERT INTO credit_transactions (user_id, order_id, type, method, amount, reference) VALUES (?,?,?,?,?,?)')
+        ->execute([$id, null, 'ADJUSTMENT', 'ADJUSTMENT', $favorExtra, $reference ?: 'Saldo a favor']);
     }
     
     $pdo->commit();
