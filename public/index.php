@@ -120,6 +120,7 @@ $router->get('/admin/customers', [AdminCustomersController::class, 'index']);
 $router->get('/admin/customers/{id}', [AdminCustomersController::class, 'show']);
 $router->post('/admin/customers/{id}/orders/manual', [AdminCustomersController::class, 'createManualOrder']);
 $router->post('/admin/customers/{id}/payments', [AdminCustomersController::class, 'addPayment']);
+$router->post('/admin/customers/{id}/credit-limit', [AdminCustomersController::class, 'updateCreditLimit']);
 $router->post('/admin/customers/{id}/deactivate', [AdminCustomersController::class, 'deactivate']);
 $router->post('/admin/customers/{id}/activate', [AdminCustomersController::class, 'activate']);
 $router->post('/admin/customers/{id}/send', [AdminCustomersController::class, 'sendStatementEmail']);

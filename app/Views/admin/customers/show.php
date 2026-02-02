@@ -60,8 +60,24 @@
                 <div class="text-muted small">Saldo: $<?= number_format($totalDebt, 2) ?></div>
                 <div class="text-muted small">Estado: <?= htmlspecialchars($creditAccount['status']) ?></div>
                 <div class="text-muted small">Saldo a favor: $<?= number_format((float)($creditAccount['favor_balance'] ?? 0), 2) ?></div>
+                <form method="post" action="<?= BASE_URL ?>admin/customers/<?= (int)$customer['id'] ?>/credit-limit" class="mt-2">
+                    <input type="hidden" name="csrf" value="<?= htmlspecialchars(App\Core\Csrf::token()) ?>">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">Limite</span>
+                        <input type="number" step="0.01" min="0" name="credit_limit" class="form-control" value="<?= htmlspecialchars(number_format((float)$creditAccount['credit_limit'], 2, '.', '')) ?>">
+                        <button class="btn btn-outline-primary">Guardar</button>
+                    </div>
+                </form>
             <?php else: ?>
                 <div class="text-muted">Sin cuenta de credito.</div>
+                <form method="post" action="<?= BASE_URL ?>admin/customers/<?= (int)$customer['id'] ?>/credit-limit" class="mt-2">
+                    <input type="hidden" name="csrf" value="<?= htmlspecialchars(App\Core\Csrf::token()) ?>">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">Limite</span>
+                        <input type="number" step="0.01" min="0" name="credit_limit" class="form-control" value="0.00">
+                        <button class="btn btn-outline-primary">Guardar</button>
+                    </div>
+                </form>
             <?php endif; ?>
         </div>
     </div>

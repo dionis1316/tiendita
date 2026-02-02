@@ -540,6 +540,31 @@ class AdminCustomersController extends AdminBaseController
     
     header('Location: ' . BASE_URL . 'admin/customers/' . $id);
     }
+
+    public function updateCreditLimit($params): void
+    {
+        $this->requireAdmin();
+        if (!Csrf::check($_POST['csrf'] ?? null)) {
+            $_SESSION['flash_error'] = 'CSRF invalido';
+            header('Location: ' . BASE_URL . 'admin/customers');
+            return;
+        }
+
+        $id = is_array($params) ? (int)($params['id'] ?? 0) : (int)$params;
+        $limit = (float)($_POST['credit_limit'] ?? 0);
+        if ($id <= 0 || $limit < 0) {
+            $_SESSION['flash_error'] = 'Limite invalido.';
+            header('Location: ' . BASE_URL . 'admin/customers/' . $id);
+            return;
+        }
+
+        $pdo = $this->pdo();
+        $pdo->prepare('INSERT INTO credit_accounts (user_id, balance, favor_balance, credit_limit) VALUES (?, 0, 0, ?) ON DUPLICATE KEY UPDATE credit_limit = VALUES(credit_limit)')
+            ->execute([$id, $limit]);
+
+        $_SESSION['flash_ok'] = 'Limite actualizado.';
+        header('Location: ' . BASE_URL . 'admin/customers/' . $id);
+    }
     
     
 
